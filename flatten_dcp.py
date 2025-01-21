@@ -2,16 +2,25 @@
 ## https://github.com/ebi-ait/hca-ebi-dev-team/blob/master/scripts/metadata-spreadsheet-by-file/HCA%20Project%20Metadata%20Spreadsheet.ipynb
 
 import argparse
-import os
-from os.path import isfile, getsize, basename, splitext
+from os.path import basename, splitext
+
+from datetime import datetime
+from functools import partial, reduce
+from dataclasses import dataclass
 
 import pandas as pd
-import requests
-from datetime import datetime
-from collections import namedtuple
-from functools import partial, reduce
 
-from dataclasses import dataclass
+
+def define_parser():
+    """Defines and returns the argument parser."""
+    parser = argparse.ArgumentParser(description="Parser for the arguments")
+    parser.add_argument("--spreadsheet", "-s", action="store",
+                        dest="spreadsheet", type=str, required=True, help="dcp spreadsheet filename")
+    parser.add_argument("--input_dir", "-i", action="store", default='dcp_spreadsheet',
+                        dest="input_dir", type=str, required=False, help="directory of the dcp spreadsheet file")
+    parser.add_argument("--output_dir", "-o", action="store", default='denormalised_spreadsheet',
+                        dest="output_dir", type=str, required=False, help="directory for the denormalised spreadsheet output")
+    return parser
 
 @dataclass
 class SequencingProtocol:
@@ -168,6 +177,8 @@ def remove_empty_tabs(spreadsheet:str, first_data_line:int):
             spreadsheet_obj.book.remove(spreadsheet_obj.book[sheet])
     spreadsheet_obj.book.save(spreadsheet)
 
+def now():
+    return lambda : datetime.now().strftime('%H%M%S.%f')
 
 def explode_csv_col(df :pd.DataFrame, column :str, sep=',') -> pd.DataFrame:
     cols={}
@@ -218,7 +229,7 @@ def join_worksheet(worksheet:pd.DataFrame,
         raise RuntimeError(err_msg) from e
     return result
 
-def flatten_spreadsheet(spreadsheet, report_entity):
+def flatten_spreadsheet(spreadsheet, report_entity, links):
     spreadsheet_obj = pd.ExcelFile(spreadsheet)
     if report_entity not in spreadsheet_obj.sheet_names:
         raise ValueError(f'spreadsheet does not contain {report_entity} sheet')
@@ -230,45 +241,49 @@ def flatten_spreadsheet(spreadsheet, report_entity):
                        report_sheet)
     return flattened
 
+def main(spreadsheet:str, input_dir:str, output_dir:str):
+    spreadsheet = f'{input_dir}/{spreadsheet}'
+    report_entities = ['Analysis file', 'Sequence file', 'Image file']
+    remove_empty_tabs(spreadsheet, first_data_line)
+    spreadsheet_obj = pd.ExcelFile(spreadsheet)
+    report_entity = next((entity for entity in report_entities if entity in spreadsheet_obj.sheet_names), None)
+    links = [link for link in links_all if link.source in spreadsheet_obj.sheet_names and link.target in spreadsheet_obj.sheet_names]
+    
+    # TODO append other report_entities in the flattened spreadsheet if available
+    flattened = flatten_spreadsheet(spreadsheet, report_entity, links)
+    
+    # remove empty columns
+    flattened.dropna(axis='columns',how='all', inplace=True)
+    
+    # add project label
+    project_info = pd.read_excel(spreadsheet, 'Project')
+    data_row_idx = 4
+    project_label = project_info['PROJECT LABEL (Required)'][data_row_idx]
+    flattened['project_label'] = project_label
+    
+    # use ingest attribute names as columns
+    for column in flattened.columns:
+        tab, original_column = column.split('_')
+        if tab not in spreadsheet_obj.sheet_names:
+            continue
+        tab_df = spreadsheet_obj.parse(tab)
+        data_row_idx = 2
+        ingest_attribute_name = tab_df[original_column][data_row_idx]
+        if ingest_attribute_name not in flattened.columns:
+            flattened.rename(columns={column:ingest_attribute_name}, inplace=True)
+        else:
+            flattened.drop(labels=column, axis='columns', inplace=True)
+    
+    report_entity_clean = report_entity.replace(" ","-")
+    flattened_filename = f'{output_dir}/{splitext(basename(spreadsheet))[0]}_denormalised_{report_entity_clean}.xlsx'
+    flattened.to_excel(flattened_filename, index=False)
+    flattened.to_csv(flattened_filename.replace('xlsx', 'csv'), index=False)
 
-sep='\\|\\|'
-now = lambda : datetime.now().strftime('%H%M%S.%f')
-first_data_line=4
-output_dir = 'denormalised_spreadsheets'
 
-spreadsheet = 'dcp_spreadsheet/IGFBP2InhibitsAdipogenesis_ontologies.xlsx'
-report_entities = ['Analysis file', 'Sequence file', 'Image file']
-remove_empty_tabs(spreadsheet, first_data_line)
-spreadsheet_obj = pd.ExcelFile(spreadsheet)
-report_entity = next((entity for entity in report_entities if entity in spreadsheet_obj.sheet_names), None)
-links = [link for link in links_all if link.source in spreadsheet_obj.sheet_names and link.target in spreadsheet_obj.sheet_names]
-# TODO append other report_entities in the flattened spreadsheet if available
-flattened = flatten_spreadsheet(spreadsheet, report_entity)
+if __name__ == "__main__":
+    args = define_parser().parse_args()
 
-# remove empty columns
-flattened.dropna(axis='columns',how='all', inplace=True)
+    sep='\\|\\|'
+    first_data_line=4
 
-# add project label
-project_info = pd.read_excel(spreadsheet, 'Project')
-data_row_idx = 4
-project_label = project_info['PROJECT LABEL (Required)'][data_row_idx]
-flattened['project_label'] = project_label
-
-# use ingest attribute names as columns
-for column in flattened.columns:
-    tab, original_column = column.split('_')
-    if tab not in spreadsheet_obj.sheet_names:
-        continue
-    tab_df = spreadsheet_obj.parse(tab)
-    data_row_idx = 2
-    ingest_attribute_name = tab_df[original_column][data_row_idx]
-    if ingest_attribute_name not in flattened.columns:
-        flattened.rename(columns={column:ingest_attribute_name}, inplace=True)
-    else:
-        flattened.drop(labels=column, axis='columns', inplace=True)
-
-
-report_entity_clean = report_entity.replace(" ","-")
-flattened_filename = f'{output_dir}/{splitext(basename(spreadsheet))[0]}_denormalised_{report_entity_clean}.xlsx'
-flattened.to_excel(flattened_filename, index=False)
-flattened.to_csv(flattened_filename.replace('xlsx', 'csv'), index=False)
+    main(spreadsheet=args.spreadsheet, input_dir=args.input_dir, output_dir=args.output_dir)
