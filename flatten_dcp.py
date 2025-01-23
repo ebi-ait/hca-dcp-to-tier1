@@ -14,8 +14,8 @@ import pandas as pd
 def define_parser():
     """Defines and returns the argument parser."""
     parser = argparse.ArgumentParser(description="Parser for the arguments")
-    parser.add_argument("--spreadsheet", "-s", action="store",
-                        dest="spreadsheet", type=str, required=True, help="dcp spreadsheet filename")
+    parser.add_argument("--spreadsheet_filename", "-s", action="store",
+                        dest="spreadsheet_filename", type=str, required=True, help="dcp spreadsheet filename")
     parser.add_argument("--input_dir", "-i", action="store", default='dcp_spreadsheet',
                         dest="input_dir", type=str, required=False, help="directory of the dcp spreadsheet file")
     parser.add_argument("--output_dir", "-o", action="store", default='denormalised_spreadsheet',
@@ -192,7 +192,7 @@ def prefix_columns(df, prefix):
     return df.rename(columns=lambda c:format_column_name(namespace=prefix,column_name=c))
 
 def remove_field_desc_lines(df:pd.DataFrame) -> pd.DataFrame:
-    return df[first_data_line:]
+    return df[FIRST_DATA_LINE:]
 
 def join_worksheet(worksheet:pd.DataFrame, 
                    link:Link, 
@@ -202,7 +202,7 @@ def join_worksheet(worksheet:pd.DataFrame,
     try:
         source_field = format_column_name(column_name=link.source_field, namespace=link.source)
         target_field = format_column_name(column_name=link.target_field, namespace=link.target)
-        worksheet = explode_csv_col(df=worksheet, column=source_field, sep=sep)
+        worksheet = explode_csv_col(df=worksheet, column=source_field, sep=SEP)
         
         spreadsheet_obj = pd.ExcelFile(spreadsheet)
         if link.target not in spreadsheet_obj.sheet_names:
@@ -213,7 +213,7 @@ def join_worksheet(worksheet:pd.DataFrame,
         target = remove_field_desc_lines(target)
         target = prefix_columns(target, prefix=link.target)
         
-        target = explode_csv_col(target, column=target_field, sep=sep)
+        target = explode_csv_col(target, column=target_field, sep=SEP)
         
         result = worksheet.merge(target, 
                                  how=link.join_type, 
@@ -241,9 +241,9 @@ def flatten_spreadsheet(spreadsheet, report_entity, links):
                        report_sheet)
     return flattened
 
-def main(spreadsheet:str, input_dir:str, output_dir:str):
-    spreadsheet = f'{input_dir}/{spreadsheet}'
-    remove_empty_tabs(spreadsheet, first_data_line)
+def main(spreadsheet_filename:str, input_dir:str, output_dir:str):
+    spreadsheet = f'{input_dir}/{spreadsheet_filename}'
+    remove_empty_tabs(spreadsheet, FIRST_DATA_LINE)
     spreadsheet_obj = pd.ExcelFile(spreadsheet)
     report_entities = [entity for entity in ['Analysis file', 'Sequence file', 'Image file'] if entity in spreadsheet_obj.sheet_names]
     links = [link for link in links_all if link.source in spreadsheet_obj.sheet_names and link.target in spreadsheet_obj.sheet_names]
@@ -285,7 +285,7 @@ def main(spreadsheet:str, input_dir:str, output_dir:str):
 if __name__ == "__main__":
     args = define_parser().parse_args()
 
-    sep='\\|\\|'
-    first_data_line=4
+    SEP='\\|\\|'
+    FIRST_DATA_LINE=4
 
-    main(spreadsheet=args.spreadsheet, input_dir=args.input_dir, output_dir=args.output_dir)
+    main(spreadsheet_filename=args.spreadsheet_filename, input_dir=args.input_dir, output_dir=args.output_dir)
