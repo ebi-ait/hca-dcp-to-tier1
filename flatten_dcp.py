@@ -11,6 +11,10 @@ from dataclasses import dataclass
 import pandas as pd
 
 
+SEP='\\|\\|'
+FIRST_DATA_LINE=4
+
+
 def define_parser():
     """Defines and returns the argument parser."""
     parser = argparse.ArgumentParser(description="Parser for the arguments")
@@ -146,24 +150,24 @@ links_all = [
     Link('Analysis file', 'Cell suspension', 'CELL SUSPENSION ID (Required)'),
     Link('Analysis file', 'Library preparation protocol', 'LIBRARY PREPARATION PROTOCOL ID (Required)'),
     Link('Analysis file', 'Sequencing protocol', 'SEQUENCING PROTOCOL ID (Required)'),
-    Link('Analysis file', 'Imaged specimen', 'IMAGED SPECIMEN ID (Required)'),    
+    Link('Analysis file', 'Imaged specimen', 'INPUT IMAGED SPECIMEN ID (Required)', 'IMAGED SPECIMEN ID (Required)'),
     
     Link('Cell suspension', 'Organoid','INPUT ORGANOID ID (Required)','ORGANOID ID (Required)'),
-    Link('Cell suspension', 'Cell line','INPUT CELL LINE ID (Required)','CELL LINE ID (Required)'),
+    # Link('Cell suspension', 'Cell line','INPUT CELL LINE ID (Required)','CELL LINE ID (Required)'),
     Link('Cell suspension', 'Specimen from organism','INPUT SPECIMEN FROM ORGANISM ID (Required)','SPECIMEN FROM ORGANISM ID (Required)'),
     Link('Cell suspension', 'Enrichment protocol','ENRICHMENT PROTOCOL ID (Required)'),
     Link('Cell suspension', 'Dissociation protocol','DISSOCIATION PROTOCOL ID (Required)'),
     
     Link('Organoid', 'Cell line','INPUT CELL LINE ID (Required)','CELL LINE ID (Required)'),
     Link('Organoid', 'Differentiation protocol','DIFFERENTIATION PROTOCOL ID (Required)', 'DIFFERENTIATION PROTOCOL ID (Required)'),
-    Link('Organoid', 'Specimen from organism','INPUT SPECIMEN FROM ORGANISM ID (Required)','SPECIMEN FROM ORGANISM ID (Required)'),
+    # Link('Organoid', 'Specimen from organism','INPUT SPECIMEN FROM ORGANISM ID (Required)','SPECIMEN FROM ORGANISM ID (Required)'),
     
     Link('Cell line', 'Specimen from organism','INPUT SPECIMEN FROM ORGANISM ID (Required)','SPECIMEN FROM ORGANISM ID (Required)'),
     Link('Cell line', 'Enrichment protocol','ENRICHMENT PROTOCOL ID (Required)'),
     Link('Cell line', 'Dissociation protocol','DISSOCIATION PROTOCOL ID (Required)'),
     
-    Link('Imaged specimen', 'Analysis file', 'IMAGED SPECIMEN ID (Required)', join_type='left'),
-    Link('Imaged specimen', 'Specimen from organism', 'INPUT SPECIMEN FROM ORGANISM ID (Required)', 'SPECIMEN FROM ORGANISM ID (Required)'),
+    # Link('Imaged specimen', 'Analysis file', 'IMAGED SPECIMEN ID (Required)', join_type='left'),
+    Link('Imaged specimen', 'Specimen from organism','INPUT SPECIMEN FROM ORGANISM ID (Required)','SPECIMEN FROM ORGANISM ID (Required)'),
     Link('Imaged specimen', 'Imaging preparation protocol', 'IMAGING PREPARATION PROTOCOL ID (Required)'),
     
     Link('Specimen from organism', 'Collection protocol', 'COLLECTION PROTOCOL ID (Required)'),
@@ -194,6 +198,36 @@ def prefix_columns(df, prefix):
 def remove_field_desc_lines(df:pd.DataFrame) -> pd.DataFrame:
     return df[FIRST_DATA_LINE:]
 
+def merge_multiple_input_entities(worksheet:pd.DataFrame,
+                            target:pd.DataFrame, 
+                            source_field:str, 
+                            target_field:str, 
+                            link:Link):
+    # Perform merge operation
+    result = pd.merge(worksheet, target, how=link.join_type, left_on=source_field, right_on=target_field, suffixes=(None, '_y'))
+    
+    # Identify duplicated columns
+    duplicated_cols = [col for col in result.columns if col.endswith('_y')]
+    overwriting_cols = [x.strip('_y') for x in duplicated_cols]
+    
+    # Check for conflicts between columns
+    result_na_none = result[overwriting_cols].dropna(how='all')
+    result_na_y = result[duplicated_cols].dropna(how='all')
+    
+    # exclude case a field is derived from different tabs
+    # (i.e. one cell suspension from organoid AND specimen)
+    # for selected columns, values should either everything na, or None or _y should be na
+    # If there are conflicts, print a message and drop duplicate columns
+    if not result_na_y.index.intersection(result_na_none.index).empty:
+        print(f'Multiple {link.target} for the same element. Will skip {link.target} from {link.source}')
+        result = result.drop(columns=duplicated_cols)
+    else:
+        # If no conflicts, fill NaN values with values from duplicate columns and drop source_field
+        result = result.drop(columns=duplicated_cols).fillna(result_na_y.rename(columns=lambda x: x.strip('_y')))
+        result.drop(columns=source_field, inplace=True)
+    return result
+
+
 def join_worksheet(worksheet:pd.DataFrame, 
                    link:Link, 
                    spreadsheet:str) -> pd.DataFrame:
@@ -215,12 +249,16 @@ def join_worksheet(worksheet:pd.DataFrame,
         
         target = explode_csv_col(target, column=target_field, sep=SEP)
         
-        result = worksheet.merge(target, 
+        result = worksheet.merge(target,
                                  how=link.join_type, 
                                  left_on=source_field, 
                                  right_on=target_field)
+        if [col for col in result.columns if col.endswith('_y')]:
+            result = merge_multiple_input_entities(worksheet, target, source_field, target_field, link)
+        else:
+            result.drop(columns=target_field)
+
         print(f'record count: original {len(worksheet)}, joined {len(result)}')
-        result.drop(columns=target_field)
         if len(result.index) == 0:
             raise RuntimeError('problem joining [{link.source}] to [{link.target}] using fields [{source_field}] and [{target_field}]: join resulted in zero rows')
         
@@ -242,7 +280,7 @@ def flatten_spreadsheet(spreadsheet, report_entity, links):
     return flattened
 
 def collapse_values(series):
-    return "||".join(series.unique().astype(str))
+    return "||".join(series.dropna().unique().astype(str))
 
 def main(spreadsheet_filename:str, input_dir:str, output_dir:str):
     spreadsheet = f'{input_dir}/{spreadsheet_filename}'
@@ -291,8 +329,5 @@ def main(spreadsheet_filename:str, input_dir:str, output_dir:str):
 
 if __name__ == "__main__":
     args = define_parser().parse_args()
-
-    SEP='\\|\\|'
-    FIRST_DATA_LINE=4
 
     main(spreadsheet_filename=args.spreadsheet_filename, input_dir=args.input_dir, output_dir=args.output_dir)

@@ -23,9 +23,13 @@ python3 flatten_dcp.py -s AscAdiposeProgenitor_ontologies.xlsx
 ```
 
 ### Arguments
-- `--spreadsheet` or `-s`: DCP metadata spreadsheet. 
+- `--spreadsheet_filename` or `-s`: DCP metadata spreadsheet filename
     - i.e. `AscAdiposeProgenitor_ontologies.xlsx`, `IGFBP2InhibitsAdipogenesis_ontologies.xlsx`
 - `--input_dir` or `-i`: Optional input directory that contains the provided dcp spreadsheet
     - i.e. `dcp_spreadsheet`
 - `--output_dir` or `-o`: Optional output directory to generate the flat dcp file
     - i.e. `denormalised_spreadsheet`
+
+
+### TODO
+- Experiments that include imaged specimens and cell suspension might have an error in the flattening of spreadsheet
