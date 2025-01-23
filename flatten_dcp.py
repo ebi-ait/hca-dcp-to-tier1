@@ -241,6 +241,9 @@ def flatten_spreadsheet(spreadsheet, report_entity, links):
                        report_sheet)
     return flattened
 
+def collapse_values(series):
+    return "||".join(series.unique().astype(str))
+
 def main(spreadsheet_filename:str, input_dir:str, output_dir:str):
     spreadsheet = f'{input_dir}/{spreadsheet_filename}'
     remove_empty_tabs(spreadsheet, FIRST_DATA_LINE)
@@ -280,6 +283,12 @@ def main(spreadsheet_filename:str, input_dir:str, output_dir:str):
     flattened_filename = f'{output_dir}/{splitext(basename(spreadsheet))[0]}_denormalised.xlsx'
     flattened.to_excel(flattened_filename, index=False)
     flattened.to_csv(flattened_filename.replace('xlsx', 'csv'), index=False)
+
+    flattened_bysample = flattened.groupby('specimen_from_organism.biomaterial_core.biomaterial_id').agg(collapse_values).dropna(axis=1, how='all')
+    flattened_bysample_filename = f'{output_dir}/{splitext(basename(spreadsheet))[0]}_bysample.xlsx'
+    flattened_bysample.to_excel(flattened_bysample_filename, index=False)
+    flattened_bysample.to_csv(flattened_bysample_filename.replace('xlsx', 'csv'), index=False)
+
 
 
 if __name__ == "__main__":
