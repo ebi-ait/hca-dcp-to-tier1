@@ -243,14 +243,17 @@ def flatten_spreadsheet(spreadsheet, report_entity, links):
 
 def main(spreadsheet:str, input_dir:str, output_dir:str):
     spreadsheet = f'{input_dir}/{spreadsheet}'
-    report_entities = ['Analysis file', 'Sequence file', 'Image file']
     remove_empty_tabs(spreadsheet, first_data_line)
     spreadsheet_obj = pd.ExcelFile(spreadsheet)
-    report_entity = next((entity for entity in report_entities if entity in spreadsheet_obj.sheet_names), None)
+    report_entities = [entity for entity in ['Analysis file', 'Sequence file', 'Image file'] if entity in spreadsheet_obj.sheet_names]
     links = [link for link in links_all if link.source in spreadsheet_obj.sheet_names and link.target in spreadsheet_obj.sheet_names]
-    
-    # TODO append other report_entities in the flattened spreadsheet if available
-    flattened = flatten_spreadsheet(spreadsheet, report_entity, links)
+        
+    flattened_list = []
+    for report_entity in report_entities:
+        # Modify links to include only relevant to this report entity
+        links_filt = [link for link in links if link.source not in report_entities or link.source == report_entity]
+        flattened_list.append(flatten_spreadsheet(spreadsheet, report_entity, links_filt))
+    flattened = pd.concat(flattened_list, axis=0, ignore_index=True)
     
     # remove empty columns
     flattened.dropna(axis='columns',how='all', inplace=True)
@@ -274,8 +277,7 @@ def main(spreadsheet:str, input_dir:str, output_dir:str):
         else:
             flattened.drop(labels=column, axis='columns', inplace=True)
     
-    report_entity_clean = report_entity.replace(" ","-")
-    flattened_filename = f'{output_dir}/{splitext(basename(spreadsheet))[0]}_denormalised_{report_entity_clean}.xlsx'
+    flattened_filename = f'{output_dir}/{splitext(basename(spreadsheet))[0]}_denormalised.xlsx'
     flattened.to_excel(flattened_filename, index=False)
     flattened.to_csv(flattened_filename.replace('xlsx', 'csv'), index=False)
 
