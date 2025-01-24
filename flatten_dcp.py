@@ -145,6 +145,7 @@ links_all = [
     Link('Sequence file', 'Sequencing protocol', 'SEQUENCING PROTOCOL ID (Required)'),
     Link('Sequence file','Library preparation protocol', 'LIBRARY PREPARATION PROTOCOL ID (Required)'),
     Link('Sequence file', 'Cell suspension', 'INPUT CELL SUSPENSION ID (Required)','CELL SUSPENSION ID (Required)'),
+    Link('Sequence file', 'Imaged specimen', 'INPUT IMAGED SPECIMEN ID (Required)', 'IMAGED SPECIMEN ID (Required)'),
     
     Link('Analysis file', 'Analysis protocol', 'ANALYSIS PROTOCOL ID (Required)', 'ANALYSIS PROTOCOL ID'),
     Link('Analysis file', 'Cell suspension', 'CELL SUSPENSION ID (Required)'),
@@ -171,7 +172,7 @@ links_all = [
     Link('Imaged specimen', 'Imaging preparation protocol', 'IMAGING PREPARATION PROTOCOL ID (Required)'),
     
     Link('Specimen from organism', 'Collection protocol', 'COLLECTION PROTOCOL ID (Required)'),
-    Link('Specimen from organism', 'Donor organism','INPUT DONOR ORGANISM ID (Required)','DONOR ORGANISM ID (Required)')        
+    Link('Specimen from organism', 'Donor organism','INPUT DONOR ORGANISM ID (Required)','DONOR ORGANISM ID (Required)')
 ]
 
 def remove_empty_tabs(spreadsheet:str, first_data_line:int):
@@ -180,6 +181,32 @@ def remove_empty_tabs(spreadsheet:str, first_data_line:int):
         if len(spreadsheet_obj.parse(sheet)) <= first_data_line:
             spreadsheet_obj.book.remove(spreadsheet_obj.book[sheet])
     spreadsheet_obj.book.save(spreadsheet)
+
+def rename_vague_friendly_names(spreadsheet:str, first_data_line:int=FIRST_DATA_LINE):
+    req_str = "(Required)"
+    vague_entities = ['BIOMATERIAL', 'PROTOCOL']
+    vague_entities.extend([id + ' ' + req_str for id in vague_entities])
+    spreadsheet_obj = pd.ExcelFile(spreadsheet, engine_kwargs={'read_only': False})
+    # check if biomaterial ID of donor exists in donor tab
+    if any(id.value == links_all[-1].target_field for id in spreadsheet_obj.book[links_all[-1].target][1]):
+        return
+    else:
+        print('Spreadsheet does not have appropriate fiendly names. Will try to edit accordingly')
+    spreadsheet_obj.book.save(spreadsheet.replace('.xlsx','_backup.xlsx'))
+    for sheet in spreadsheet_obj.sheet_names:
+        for field in spreadsheet_obj.book[sheet][1]:
+            if not field.value:
+                continue
+            field.value = (field.value.removesuffix(req_str).upper() +  req_str) if req_str in field.value else field.value.upper()
+            if any(entity in field.value for entity in vague_entities):
+                field_program_name = spreadsheet_obj.book[sheet][first_data_line][field.column].value
+                field_friendly_entity = field_program_name.split('.')[0].replace('_',' ').capitalize()
+                entity = field.value.split(' ')[0]
+                field.value = field.value.replace(entity, field_friendly_entity.upper())
+                if field_friendly_entity != sheet and entity == 'BIOMATERIAL':
+                    field.value = f'INPUT {field.value}'
+    spreadsheet_obj.book.save(spreadsheet)
+
 
 def now():
     return lambda : datetime.now().strftime('%H%M%S.%f')
@@ -285,6 +312,7 @@ def collapse_values(series):
 def main(spreadsheet_filename:str, input_dir:str, output_dir:str):
     spreadsheet = f'{input_dir}/{spreadsheet_filename}'
     remove_empty_tabs(spreadsheet, FIRST_DATA_LINE)
+    rename_vague_friendly_names(spreadsheet, FIRST_DATA_LINE)
     spreadsheet_obj = pd.ExcelFile(spreadsheet)
     report_entities = [entity for entity in ['Analysis file', 'Sequence file', 'Image file'] if entity in spreadsheet_obj.sheet_names]
     links = [link for link in links_all if link.source in spreadsheet_obj.sheet_names and link.target in spreadsheet_obj.sheet_names]
