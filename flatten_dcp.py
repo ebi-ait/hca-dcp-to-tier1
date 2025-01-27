@@ -7,6 +7,7 @@ from os.path import basename, splitext
 from datetime import datetime
 from functools import partial, reduce
 from dataclasses import dataclass
+from shutil import copy
 
 import pandas as pd
 
@@ -352,6 +353,8 @@ def collapse_values(series):
 
 def main(spreadsheet_filename:str, input_dir:str, output_dir:str):
     spreadsheet = f'{input_dir}/{spreadsheet_filename}'
+    spreadsheet_backup = copy(spreadsheet, spreadsheet.replace('.xlsx', '_backup.xlsx'))
+    print(f"Copied spreadsheet backup in {spreadsheet_backup}")
     remove_empty_tabs_and_fields(spreadsheet)
     rename_vague_friendly_names(spreadsheet)
     spreadsheet_obj = pd.ExcelFile(spreadsheet)
