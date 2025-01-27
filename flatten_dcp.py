@@ -143,7 +143,7 @@ links_all = [
     Link('Image file', 'Imaging protocol', 'IMAGING PROTOCOL ID (Required)'),
     
     Link('Sequence file', 'Sequencing protocol', 'SEQUENCING PROTOCOL ID (Required)'),
-    Link('Sequence file','Library preparation protocol', 'LIBRARY PREPARATION PROTOCOL ID (Required)'),
+    Link('Sequence file', 'Library preparation protocol', 'LIBRARY PREPARATION PROTOCOL ID (Required)'),
     Link('Sequence file', 'Cell suspension', 'INPUT CELL SUSPENSION ID (Required)','CELL SUSPENSION ID (Required)'),
     Link('Sequence file', 'Imaged specimen', 'INPUT IMAGED SPECIMEN ID (Required)', 'IMAGED SPECIMEN ID (Required)'),
     
@@ -154,20 +154,21 @@ links_all = [
     Link('Analysis file', 'Imaged specimen', 'INPUT IMAGED SPECIMEN ID (Required)', 'IMAGED SPECIMEN ID (Required)'),
     
     Link('Cell suspension', 'Organoid','INPUT ORGANOID ID (Required)','ORGANOID ID (Required)'),
-    # Link('Cell suspension', 'Cell line','INPUT CELL LINE ID (Required)','CELL LINE ID (Required)'),
+    Link('Cell suspension', 'Cell line','INPUT CELL LINE ID (Required)','CELL LINE ID (Required)'),
     Link('Cell suspension', 'Specimen from organism','INPUT SPECIMEN FROM ORGANISM ID (Required)','SPECIMEN FROM ORGANISM ID (Required)'),
     Link('Cell suspension', 'Enrichment protocol','ENRICHMENT PROTOCOL ID (Required)'),
     Link('Cell suspension', 'Dissociation protocol','DISSOCIATION PROTOCOL ID (Required)'),
     
     Link('Organoid', 'Cell line','INPUT CELL LINE ID (Required)','CELL LINE ID (Required)'),
-    Link('Organoid', 'Differentiation protocol','DIFFERENTIATION PROTOCOL ID (Required)', 'DIFFERENTIATION PROTOCOL ID (Required)'),
-    # Link('Organoid', 'Specimen from organism','INPUT SPECIMEN FROM ORGANISM ID (Required)','SPECIMEN FROM ORGANISM ID (Required)'),
+    Link('Organoid', 'Differentiation protocol','DIFFERENTIATION PROTOCOL ID (Required)'),
+    Link('Organoid', 'Dissociation protocol','DISSOCIATION PROTOCOL ID (Required)'),
+    Link('Organoid', 'Specimen from organism','INPUT SPECIMEN FROM ORGANISM ID (Required)','SPECIMEN FROM ORGANISM ID (Required)'),
     
     Link('Cell line', 'Specimen from organism','INPUT SPECIMEN FROM ORGANISM ID (Required)','SPECIMEN FROM ORGANISM ID (Required)'),
     Link('Cell line', 'Enrichment protocol','ENRICHMENT PROTOCOL ID (Required)'),
     Link('Cell line', 'Dissociation protocol','DISSOCIATION PROTOCOL ID (Required)'),
     
-    # Link('Imaged specimen', 'Analysis file', 'IMAGED SPECIMEN ID (Required)', join_type='left'),
+    Link('Imaged specimen', 'Analysis file', 'IMAGED SPECIMEN ID (Required)'),
     Link('Imaged specimen', 'Specimen from organism','INPUT SPECIMEN FROM ORGANISM ID (Required)','SPECIMEN FROM ORGANISM ID (Required)'),
     Link('Imaged specimen', 'Imaging preparation protocol', 'IMAGING PREPARATION PROTOCOL ID (Required)'),
     
@@ -175,12 +176,53 @@ links_all = [
     Link('Specimen from organism', 'Donor organism','INPUT DONOR ORGANISM ID (Required)','DONOR ORGANISM ID (Required)')
 ]
 
-def remove_empty_tabs(spreadsheet:str, first_data_line:int):
+def remove_empty_tabs_and_fields(spreadsheet:str, first_data_line:int=FIRST_DATA_LINE):
     spreadsheet_obj = pd.ExcelFile(spreadsheet, engine_kwargs={'read_only': False})
     for sheet in spreadsheet_obj.sheet_names:
         if len(spreadsheet_obj.parse(sheet)) <= first_data_line:
             spreadsheet_obj.book.remove(spreadsheet_obj.book[sheet])
+        del_cols = [i + 1 for i,x in enumerate(spreadsheet_obj.parse(sheet)[FIRST_DATA_LINE:].isna().all()) if x]
+        del_cols.reverse()
+        _ = [spreadsheet_obj.book[sheet].delete_cols(col, 1) for col in del_cols]
     spreadsheet_obj.book.save(spreadsheet)
+
+def derive_exprimental_design(initial_tab, spreadsheet):
+    spreadsheet_obj = pd.ExcelFile(spreadsheet)
+    sheet_cache = {}
+    applied_links = []
+    
+    def parse_sheet(sheet_name):
+        if sheet_name not in sheet_cache:
+            sheet_cache[sheet_name] = spreadsheet_obj.parse(sheet_name)
+        return sheet_cache[sheet_name]
+    
+    def check_link_exists(link):
+        if link.target not in spreadsheet_obj.sheet_names:
+            return False
+        source_sheet = parse_sheet(link.source)
+        target_sheet = parse_sheet(link.target)
+        if link.source_field not in source_sheet.columns:
+            return False
+        if link.target_field not in target_sheet.columns:
+            return False
+        return True
+    
+    def dfs(current_entity, current_path, all_paths):
+        current_path.append(current_entity)
+        next_links = [link for link in links_all if link.source == current_entity]
+        if not next_links:
+            all_paths.append(current_path.copy())
+        else:
+            for link in next_links:
+                if link.target not in current_path and check_link_exists(link):
+                    applied_links.append(link)
+                    dfs(link.target, current_path, all_paths)
+        current_path.pop()
+    
+    all_paths = []
+    dfs(initial_tab, [], all_paths)
+    return all_paths, applied_links
+                
 
 def rename_vague_friendly_names(spreadsheet:str, first_data_line:int=FIRST_DATA_LINE):
     req_str = "(Required)"
@@ -190,8 +232,7 @@ def rename_vague_friendly_names(spreadsheet:str, first_data_line:int=FIRST_DATA_
     # check if biomaterial ID of donor exists in donor tab
     if any(id.value == links_all[-1].target_field for id in spreadsheet_obj.book[links_all[-1].target][1]):
         return
-    else:
-        print('Spreadsheet does not have appropriate fiendly names. Will try to edit accordingly')
+    print('Spreadsheet does not have appropriate fiendly names. Will try to edit accordingly')
     spreadsheet_obj.book.save(spreadsheet.replace('.xlsx','_backup.xlsx'))
     for sheet in spreadsheet_obj.sheet_names:
         for field in spreadsheet_obj.book[sheet][1]:
@@ -311,16 +352,15 @@ def collapse_values(series):
 
 def main(spreadsheet_filename:str, input_dir:str, output_dir:str):
     spreadsheet = f'{input_dir}/{spreadsheet_filename}'
-    remove_empty_tabs(spreadsheet, FIRST_DATA_LINE)
-    rename_vague_friendly_names(spreadsheet, FIRST_DATA_LINE)
+    remove_empty_tabs_and_fields(spreadsheet)
+    rename_vague_friendly_names(spreadsheet)
     spreadsheet_obj = pd.ExcelFile(spreadsheet)
     report_entities = [entity for entity in ['Analysis file', 'Sequence file', 'Image file'] if entity in spreadsheet_obj.sheet_names]
-    links = [link for link in links_all if link.source in spreadsheet_obj.sheet_names and link.target in spreadsheet_obj.sheet_names]
         
     flattened_list = []
     for report_entity in report_entities:
         # Modify links to include only relevant to this report entity
-        links_filt = [link for link in links if link.source not in report_entities or link.source == report_entity]
+        _, links_filt = derive_exprimental_design(report_entity, spreadsheet)
         flattened_list.append(flatten_spreadsheet(spreadsheet, report_entity, links_filt))
     flattened = pd.concat(flattened_list, axis=0, ignore_index=True)
     
