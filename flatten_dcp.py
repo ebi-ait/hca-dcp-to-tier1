@@ -19,11 +19,11 @@ FIRST_DATA_LINE=4
 def define_parser():
     """Defines and returns the argument parser."""
     parser = argparse.ArgumentParser(description="Parser for the arguments")
-    parser.add_argument("--spreadsheet_filename", "-s", action="store",
+    parser.add_argument("-s", "--spreadsheet_filename", action="store",
                         dest="spreadsheet_filename", type=str, required=True, help="dcp spreadsheet filename")
-    parser.add_argument("--input_dir", "-i", action="store", default='dcp_spreadsheet',
+    parser.add_argument("-i", "--input_dir", action="store", default='dcp_spreadsheet',
                         dest="input_dir", type=str, required=False, help="directory of the dcp spreadsheet file")
-    parser.add_argument("--output_dir", "-o", action="store", default='denormalised_spreadsheet',
+    parser.add_argument("-o", "--output_dir", action="store", default='denormalised_spreadsheet',
                         dest="output_dir", type=str, required=False, help="directory for the denormalised spreadsheet output")
     return parser
 
