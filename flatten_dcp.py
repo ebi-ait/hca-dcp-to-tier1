@@ -28,101 +28,6 @@ def define_parser():
     return parser
 
 @dataclass
-class SequencingProtocol:
-    SEQUENCING_PROTOCOL_ID_Required: str
-
-@dataclass
-class LibraryPreparationProtocol:
-    LIBRARY_PREPARATION_PROTOCOL_ID: str
-
-@dataclass
-class DissociationProtocol:
-    DISSOCIATION_PROTOCOL_ID:str
-
-@dataclass
-class CollectionProtocol:
-    COLLECTION_PROTOCOL_ID:str
-
-@dataclass
-class AnalysisProtocol:
-    ANALYSIS_PROTOCOL_ID:str
-
-@dataclass
-class DifferentiationProtocol:
-    DIFFERENTIATION_PROTOCOL_ID:str
-
-@dataclass
-class DonorOrganism:
-    DONOR_ORGANISM_ID:str 
-
-@dataclass
-class SpecimenFromOrganism:
-    SPECIMEN_FROM_ORGANISM_ID:str
-    COLLECTION_PROTOCOL_ID:CollectionProtocol
-    INPUT_DONOR_ORGANISM_ID:DonorOrganism
-
-@dataclass
-class EnrichmentProtocol:
-    ENRICHMENT_PROTOCOL_ID:str
-
-@dataclass
-class CellLine:
-    CELL_LINE_ID: str
-    ENRICHMENT_PROTOCOL_ID:EnrichmentProtocol
-    DISSOCIATION_PROTOCOL_ID:DissociationProtocol
-    INPUT_SPECIMEN_FROM_ORGANISM_ID:SpecimenFromOrganism
-
-@dataclass
-class Organoid:
-    ORGANOID_ID: str
-    INPUT_CELL_LINE_ID:CellLine
-    INPUT_SPECIMEN_FROM_ORGANISM_ID:SpecimenFromOrganism
-    DIFFERENTIATION_PROTOCOL_ID:DifferentiationProtocol
-
-@dataclass
-class CellSuspension:
-    CELL_SUSPENSION_ID: str
-    ENRICHMENT_PROTOCOL_ID:EnrichmentProtocol
-    INPUT_SPECIMEN_FROM_ORGANISM_ID:SpecimenFromOrganism
-    DISSOCIATION_PROTOCOL_ID:DissociationProtocol
-    INPUT_SPECIMEN_FROM_ORGANISM_ID:SpecimenFromOrganism
-    INPUT_ORGANOID_ID:Organoid
-    INPUT_CELL_LINE_ID:CellLine
-
-@dataclass
-class SequenceFile:
-    SEQUENCING_PROTOCOL_ID_Required: SequencingProtocol
-    LIBRARY_PREPARATION_PROTOCOL_ID_Required: LibraryPreparationProtocol
-    INPUT_CELL_SUSPENSION_ID_Required: CellSuspension
-
-@dataclass
-class ImagingPreparationProtocol:
-    IMAGING_PREPARATION_PROTOCOL_ID:str
-
-@dataclass
-class ImagedSpecimen:
-    IMAGED_SPECIMEN_ID_Required:str
-    INPUT_SPECIMEN_FROM_ORGANISM_ID_Required:SpecimenFromOrganism
-    IMAGING_PREPARATION_PROTOCOL_ID_Required:ImagingPreparationProtocol
-
-@dataclass
-class AnalysisFile:
-    ANALYSIS_PROTOCOL_ID_Required: AnalysisProtocol
-    IMAGED_SPECIMEN_ID_Required:ImagedSpecimen
-    CELL_SUSPENSION_ID_Required:CellSuspension
-    LIBRARY_PREPARATION_PROTOCOL_ID_Required:LibraryPreparationProtocol
-    SEQUENCING_PROTOCOL_ID_Required:SequencingProtocol
-
-@dataclass
-class ImagingProtocol:
-    IMAGING_PROTOCOL_ID:str
-
-@dataclass
-class ImageFile:
-    INPUT_IMAGED_SPECIMEN_ID:ImagedSpecimen
-    IMAGING_PROTOCOL_ID:ImagingProtocol
-
-@dataclass
 class Link:
     source:str
     target:str
@@ -134,8 +39,8 @@ class Link:
     def __post_init__(self):
         if self.target_field is None:
             self.target_field = self.source_field
-        else:
-            print(f'{self.source}->{self.target} using fields {self.source_field}->{self.target_field}')
+        # else:
+        #     print(f'{self.source}->{self.target} using fields {self.source_field}->{self.target_field}')
 
 
 # TODO: links list is assumed to be topologically sorted, in the future - sort
@@ -187,7 +92,7 @@ def remove_empty_tabs_and_fields(spreadsheet:str, first_data_line:int=FIRST_DATA
         _ = [spreadsheet_obj.book[sheet].delete_cols(col, 1) for col in del_cols]
     spreadsheet_obj.book.save(spreadsheet)
 
-def derive_exprimental_design(initial_tab, spreadsheet):
+def derive_exprimental_design(report_entity, spreadsheet):
     spreadsheet_obj = pd.ExcelFile(spreadsheet)
     sheet_cache = {}
     applied_links = []
@@ -221,7 +126,10 @@ def derive_exprimental_design(initial_tab, spreadsheet):
         current_path.pop()
     
     all_paths = []
-    dfs(initial_tab, [], all_paths)
+    dfs(report_entity, [], all_paths)
+    print(f"All different paths in the experimental design starting from {report_entity} (no: {len(all_paths)}):")
+    for path in all_paths:
+        print('->'.join(path))
     return all_paths, applied_links
                 
 
