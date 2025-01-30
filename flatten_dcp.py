@@ -153,22 +153,18 @@ def derive_exprimental_design(report_entity, spreadsheet_obj):
     return all_paths, applied_links
 
 def extract_pi(spreadsheet_obj:pd.ExcelFile):
-    # TODO add email of PI as well
-    contr_df = spreadsheet_obj.parse('Project - Contributors')
-    corresponding_col = 'CORRESPONDING CONTRIBUTOR'
-    role_col = 'PROJECT ROLE'
-    name_col = 'CONTACT NAME (Required)'
-    corresponding_authors = contr_df[contr_df[corresponding_col] == 'yes']
+    contacts_df = remove_field_desc_lines(spreadsheet_obj.parse('Project - Contributors'))
+    pi_details = ['CONTACT NAME (Required)', 'EMAIL ADDRESS']
+    present_contacts = [col for col in pi_details if col in contacts_df]
+    last_author = pd.DataFrame({col: [None] for col in pi_details})
+    corresponding_authors = contacts_df.loc[contacts_df['CORRESPONDING CONTRIBUTOR'] == 'yes', present_contacts] \
+        if 'CORRESPONDING CONTRIBUTOR' in contacts_df else pd.DataFrame()
     if not corresponding_authors.empty:
-        last_author = corresponding_authors[name_col].iloc[[-1]]
-    else:
-        filtered_authors = contr_df[contr_df[role_col] != 'data curator']
-        if not filtered_authors.empty:
-            last_author = filtered_authors[name_col].iloc[[-1]]
-        else:
-            last_author = pd.Series({name_col: ''})
-    last_author.name = '_'.join(['Project - Contributors', name_col])
-    return last_author
+        last_author = corresponding_authors.iloc[[-1]]
+    elif 'PROJECT ROLE' in contacts_df:
+        filtered_authors = contacts_df.loc[contacts_df['PROJECT ROLE'] != 'data curator', present_contacts]
+        last_author = filtered_authors.iloc[[-1]] if not filtered_authors.empty else None
+    return last_author.rename(lambda x: f'Project - Contributors_{x}', axis=1)
 
 def extract_project_tab(spreadsheet_obj:pd.ExcelFile, fields:list):
     df = pd.DataFrame()
