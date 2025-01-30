@@ -38,11 +38,9 @@ class Link:
     def __post_init__(self):
         if self.target_field is None:
             self.target_field = self.source_field
-        # else:
-        #     print(f'{self.source}->{self.target} using fields {self.source_field}->{self.target_field}')
 
 
-# TODO: links list is assumed to be topologically sorted, in the future - sort
+# All available links that HCA DCP metadata schema supports
 links_all = [
     Link('Image file', 'Imaged specimen', 'INPUT IMAGED SPECIMEN ID (Required)', 'IMAGED SPECIMEN ID (Required)'),
     Link('Image file', 'Imaging protocol', 'IMAGING PROTOCOL ID (Required)'),
@@ -91,6 +89,30 @@ def remove_empty_tabs_and_fields(spreadsheet:str, first_data_line:int=FIRST_DATA
         _ = [spreadsheet_obj.book[sheet].delete_cols(col, 1) for col in del_cols]
     spreadsheet_obj.book.save(spreadsheet)
 
+def rename_vague_friendly_names(spreadsheet:str, first_data_line:int=FIRST_DATA_LINE):
+    req_str = "(Required)"
+    vague_entities = ['BIOMATERIAL', 'PROTOCOL']
+    vague_entities.extend([id + ' ' + req_str for id in vague_entities])
+    spreadsheet_obj = pd.ExcelFile(spreadsheet, engine_kwargs={'read_only': False})
+    # check if biomaterial ID of donor exists in donor tab
+    if any(id.value == links_all[-1].target_field for id in spreadsheet_obj.book[links_all[-1].target][1]):
+        return
+    print('Spreadsheet does not have appropriate fiendly names. Will try to edit accordingly')
+    spreadsheet_obj.book.save(spreadsheet.replace('.xlsx','_backup.xlsx'))
+    for sheet in spreadsheet_obj.sheet_names:
+        for field in spreadsheet_obj.book[sheet][1]:
+            if not field.value:
+                continue
+            field.value = (field.value.removesuffix(req_str).upper() +  req_str) if req_str in field.value else field.value.upper()
+            if any(entity in field.value for entity in vague_entities):
+                field_program_name = spreadsheet_obj.book[sheet][first_data_line][field.column].value
+                field_friendly_entity = field_program_name.split('.')[0].replace('_',' ').capitalize()
+                entity = field.value.split(' ')[0]
+                field.value = field.value.replace(entity, field_friendly_entity.upper())
+                if field_friendly_entity != sheet and entity == 'BIOMATERIAL':
+                    field.value = f'INPUT {field.value}'
+    spreadsheet_obj.book.save(spreadsheet)
+
 def derive_exprimental_design(report_entity, spreadsheet):
     spreadsheet_obj = pd.ExcelFile(spreadsheet)
     sheet_cache = {}
@@ -130,32 +152,6 @@ def derive_exprimental_design(report_entity, spreadsheet):
     for path in all_paths:
         print('->'.join(path))
     return all_paths, applied_links
-                
-
-def rename_vague_friendly_names(spreadsheet:str, first_data_line:int=FIRST_DATA_LINE):
-    req_str = "(Required)"
-    vague_entities = ['BIOMATERIAL', 'PROTOCOL']
-    vague_entities.extend([id + ' ' + req_str for id in vague_entities])
-    spreadsheet_obj = pd.ExcelFile(spreadsheet, engine_kwargs={'read_only': False})
-    # check if biomaterial ID of donor exists in donor tab
-    if any(id.value == links_all[-1].target_field for id in spreadsheet_obj.book[links_all[-1].target][1]):
-        return
-    print('Spreadsheet does not have appropriate fiendly names. Will try to edit accordingly')
-    spreadsheet_obj.book.save(spreadsheet.replace('.xlsx','_backup.xlsx'))
-    for sheet in spreadsheet_obj.sheet_names:
-        for field in spreadsheet_obj.book[sheet][1]:
-            if not field.value:
-                continue
-            field.value = (field.value.removesuffix(req_str).upper() +  req_str) if req_str in field.value else field.value.upper()
-            if any(entity in field.value for entity in vague_entities):
-                field_program_name = spreadsheet_obj.book[sheet][first_data_line][field.column].value
-                field_friendly_entity = field_program_name.split('.')[0].replace('_',' ').capitalize()
-                entity = field.value.split(' ')[0]
-                field.value = field.value.replace(entity, field_friendly_entity.upper())
-                if field_friendly_entity != sheet and entity == 'BIOMATERIAL':
-                    field.value = f'INPUT {field.value}'
-    spreadsheet_obj.book.save(spreadsheet)
-
 
 def explode_csv_col(df :pd.DataFrame, column :str, sep=',') -> pd.DataFrame:
     cols={}
@@ -187,8 +183,7 @@ def merge_multiple_input_entities(worksheet:pd.DataFrame,
     result_na_none = result[overwriting_cols].dropna(how='all')
     result_na_y = result[duplicated_cols].dropna(how='all')
     
-    # exclude case a field is derived from different tabs
-    # (i.e. one cell suspension from organoid AND specimen)
+    # exclude case a field is derived from different tabs (i.e. one cell suspension from organoid AND specimen)
     # for selected columns, values should either everything na, or None or _y should be na
     # If there are conflicts, print a message and drop duplicate columns
     if not result_na_y.index.intersection(result_na_none.index).empty:
@@ -199,7 +194,6 @@ def merge_multiple_input_entities(worksheet:pd.DataFrame,
         result = result.drop(columns=duplicated_cols).fillna(result_na_y.rename(columns=lambda x: x.strip('_y')))
         result.drop(columns=source_field, inplace=True)
     return result
-
 
 def join_worksheet(worksheet:pd.DataFrame, 
                    link:Link, 
@@ -274,7 +268,7 @@ def main(spreadsheet_filename:str, input_dir:str, output_dir:str):
     # remove empty columns
     flattened.dropna(axis='columns',how='all', inplace=True)
 
-    # reorder df to use id columns first
+    # reorder flattened to use id columns first
     orig_ids = {link.source + '_' + link.source.upper() + ' ID (Required)' for link in links_all if 'file' not in link.source}
     orig_ids = [id for id in orig_ids if id in flattened.columns]
     flattened = flattened[orig_ids + [col for col in flattened.columns if col not in orig_ids]]
