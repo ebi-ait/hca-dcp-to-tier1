@@ -303,7 +303,7 @@ def main(spreadsheet_filename:str, input_dir:str, output_dir:str):
 
     flattened_bysample = flattened.groupby('specimen_from_organism.biomaterial_core.biomaterial_id').agg(collapse_values).dropna(axis=1, how='all')
     flattened_bysample_filename = f'{output_dir}/{splitext(basename(spreadsheet))[0]}_bysample.csv'
-    flattened_bysample.to_csv(flattened_bysample_filename, index=False)
+    flattened_bysample.to_csv(flattened_bysample_filename, index=True)
 
 
 
