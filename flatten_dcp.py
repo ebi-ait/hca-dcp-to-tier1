@@ -273,6 +273,11 @@ def main(spreadsheet_filename:str, input_dir:str, output_dir:str):
     
     # remove empty columns
     flattened.dropna(axis='columns',how='all', inplace=True)
+
+    # reorder df to use id columns first
+    orig_ids = {link.source + '_' + link.source.upper() + ' ID (Required)' for link in links_all if 'file' not in link.source}
+    orig_ids = [id for id in orig_ids if id in flattened.columns]
+    flattened = flattened[orig_ids + [col for col in flattened.columns if col not in orig_ids]]
     
     # add project label
     project_info = pd.read_excel(spreadsheet, 'Project')
