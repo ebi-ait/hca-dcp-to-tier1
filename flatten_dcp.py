@@ -152,8 +152,34 @@ def derive_exprimental_design(report_entity, spreadsheet_obj):
         print('->'.join(path))
     return all_paths, applied_links
 
-# def extract_project_metadata(spreadsheet:str):
+def extract_pi(spreadsheet_obj:pd.ExcelFile):
+    contr_df = spreadsheet_obj.parse('Project - Contributors')
+    corresponding_col = 'CORRESPONDING CONTRIBUTOR'
+    role_col = 'PROJECT ROLE'
+    name_col = 'CONTACT NAME (Required)'
+    corresponding_authors = contr_df[contr_df[corresponding_col] == 'yes']
+    if not corresponding_authors.empty:
+        last_author = corresponding_authors[name_col].iloc[[-1]]
+    else:
+        filtered_authors = contr_df[contr_df[role_col] != 'data curator']
+        if not filtered_authors.empty:
+            last_author = filtered_authors[name_col].iloc[[-1]]
+        else:
+            last_author = pd.DataFrame()
+    return last_author
 
+def extract_project_tab(spreadsheet_obj:pd.ExcelFile, fields:list):
+    df = pd.DataFrame()
+    for tab in ['Project', 'Project - Publications']:
+        if tab not in spreadsheet_obj.sheet_names:
+            return df
+        sheet = remove_field_desc_lines(spreadsheet_obj.parse(tab))
+        cols = [col for col in fields if col in sheet]
+        if not cols:
+            return df
+        sheet = sheet[cols].groupby(cols[0]).agg('; '.join).reset_index().add_prefix(tab + '_')
+        df = pd.concat([df, sheet], axis=1)
+    return df
 
 def explode_csv_col(df :pd.DataFrame, column :str, sep=',') -> pd.DataFrame:
     cols={}
@@ -273,10 +299,11 @@ def main(spreadsheet_filename:str, input_dir:str, output_dir:str):
     flattened = flattened[orig_ids + [col for col in flattened.columns if col not in orig_ids]]
     
     # add project label
-    project_info = pd.read_excel(spreadsheet, 'Project')
-    data_row_idx = FIRST_DATA_LINE
-    project_label = project_info['PROJECT LABEL (Required)'][data_row_idx]
-    flattened['project_label'] = project_label
+    project_fields = ['PROJECT LABEL (Required)', 'PROJECT TITLE (Required)', 'INSDC PROJECT ACCESSION', 'GEO SERIES ACCESSION', 'ARRAYEXPRESS ACCESSION', 'INSDC STUDY ACCESSION', 'BIOSTUDIES ACCESSION', 'EGA Study/Dataset Accession(s)', 'dbGap Study Accession(s)', 'PUBLICATION TITLE (Required)', 'PUBLICATION DOI']
+    project_df = extract_project_tab(spreadsheet_obj, project_fields)
+    project_df = pd.concat([project_df, extract_pi(spreadsheet_obj).reset_index(drop=True)], axis=1)
+    project_df = project_df.loc[project_df.index.repeat(len(flattened))].reset_index(drop=True)
+    flattened = pd.concat([flattened, project_df], axis=1)
     
     # use ingest attribute names as columns
     for column in flattened.columns:
