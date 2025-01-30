@@ -113,8 +113,7 @@ def rename_vague_friendly_names(spreadsheet:str, first_data_line:int=FIRST_DATA_
                     field.value = f'INPUT {field.value}'
     spreadsheet_obj.book.save(spreadsheet)
 
-def derive_exprimental_design(report_entity, spreadsheet):
-    spreadsheet_obj = pd.ExcelFile(spreadsheet)
+def derive_exprimental_design(report_entity, spreadsheet_obj):
     sheet_cache = {}
     applied_links = []
     
@@ -152,6 +151,9 @@ def derive_exprimental_design(report_entity, spreadsheet):
     for path in all_paths:
         print('->'.join(path))
     return all_paths, applied_links
+
+# def extract_project_metadata(spreadsheet:str):
+
 
 def explode_csv_col(df :pd.DataFrame, column :str, sep=',') -> pd.DataFrame:
     cols={}
@@ -197,7 +199,7 @@ def merge_multiple_input_entities(worksheet:pd.DataFrame,
 
 def join_worksheet(worksheet:pd.DataFrame, 
                    link:Link, 
-                   spreadsheet:str) -> pd.DataFrame:
+                   spreadsheet_obj:pd.ExcelFile) -> pd.DataFrame:
     print(f'joining [{link.source}] to [{link.target}]')
     print(f'fields [{link.source_field}] and [{link.target_field}]')
     try:
@@ -205,12 +207,10 @@ def join_worksheet(worksheet:pd.DataFrame,
         target_field = format_column_name(column_name=link.target_field, namespace=link.target)
         worksheet = explode_csv_col(df=worksheet, column=source_field, sep=SEP)
         
-        spreadsheet_obj = pd.ExcelFile(spreadsheet)
         if link.target not in spreadsheet_obj.sheet_names:
             raise ValueError(f'spreadsheet does not contain {link.target} sheet. Possible names {sorted(spreadsheet_obj.sheet_names)}')
         target = spreadsheet_obj.parse(link.target)
         
-        target = pd.read_excel(spreadsheet, link.target)
         target = remove_field_desc_lines(target)
         target = prefix_columns(target, prefix=link.target)
         
@@ -234,14 +234,13 @@ def join_worksheet(worksheet:pd.DataFrame,
         raise RuntimeError(err_msg) from e
     return result
 
-def flatten_spreadsheet(spreadsheet, report_entity, links):
-    spreadsheet_obj = pd.ExcelFile(spreadsheet)
+def flatten_spreadsheet(spreadsheet_obj, report_entity, links):
     if report_entity not in spreadsheet_obj.sheet_names:
         raise ValueError(f'spreadsheet does not contain {report_entity} sheet')
     report_sheet = spreadsheet_obj.parse(report_entity)
     report_sheet = prefix_columns(report_sheet, prefix=report_entity)
     report_sheet = remove_field_desc_lines(report_sheet)
-    flattened = reduce(partial(join_worksheet, spreadsheet=spreadsheet), 
+    flattened = reduce(partial(join_worksheet, spreadsheet_obj=spreadsheet_obj), 
                        links,
                        report_sheet)
     return flattened
@@ -261,8 +260,8 @@ def main(spreadsheet_filename:str, input_dir:str, output_dir:str):
     flattened_list = []
     for report_entity in report_entities:
         # Modify links to include only relevant to this report entity
-        _, links_filt = derive_exprimental_design(report_entity, spreadsheet)
-        flattened_list.append(flatten_spreadsheet(spreadsheet, report_entity, links_filt))
+        _, links_filt = derive_exprimental_design(report_entity, spreadsheet_obj)
+        flattened_list.append(flatten_spreadsheet(spreadsheet_obj, report_entity, links_filt))
     flattened = pd.concat(flattened_list, axis=0, ignore_index=True)
     
     # remove empty columns
