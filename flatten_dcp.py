@@ -153,6 +153,7 @@ def derive_exprimental_design(report_entity, spreadsheet_obj):
     return all_paths, applied_links
 
 def extract_pi(spreadsheet_obj:pd.ExcelFile):
+    # TODO add email of PI as well
     contr_df = spreadsheet_obj.parse('Project - Contributors')
     corresponding_col = 'CORRESPONDING CONTRIBUTOR'
     role_col = 'PROJECT ROLE'
@@ -165,7 +166,8 @@ def extract_pi(spreadsheet_obj:pd.ExcelFile):
         if not filtered_authors.empty:
             last_author = filtered_authors[name_col].iloc[[-1]]
         else:
-            last_author = pd.DataFrame()
+            last_author = pd.Series({name_col: ''})
+    last_author.name = '_'.join(['Project - Contributors', name_col])
     return last_author
 
 def extract_project_tab(spreadsheet_obj:pd.ExcelFile, fields:list):
