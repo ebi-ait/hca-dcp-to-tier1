@@ -4,7 +4,6 @@
 import argparse
 from os.path import basename, splitext
 
-from datetime import datetime
 from functools import partial, reduce
 from dataclasses import dataclass
 from shutil import copy
@@ -158,9 +157,6 @@ def rename_vague_friendly_names(spreadsheet:str, first_data_line:int=FIRST_DATA_
     spreadsheet_obj.book.save(spreadsheet)
 
 
-def now():
-    return lambda : datetime.now().strftime('%H%M%S.%f')
-
 def explode_csv_col(df :pd.DataFrame, column :str, sep=',') -> pd.DataFrame:
     cols={}
     cols[column] = df[column].str.split(sep)
@@ -234,7 +230,7 @@ def join_worksheet(worksheet:pd.DataFrame,
             result = merge_multiple_input_entities(worksheet, target, source_field, target_field, link)
         else:
             result.drop(columns=target_field)
-
+        
         print(f'record count: original {len(worksheet)}, joined {len(result)}')
         if len(result.index) == 0:
             raise RuntimeError('problem joining [{link.source}] to [{link.target}] using fields [{source_field}] and [{target_field}]: join resulted in zero rows')
@@ -280,7 +276,7 @@ def main(spreadsheet_filename:str, input_dir:str, output_dir:str):
     
     # add project label
     project_info = pd.read_excel(spreadsheet, 'Project')
-    data_row_idx = 4
+    data_row_idx = FIRST_DATA_LINE
     project_label = project_info['PROJECT LABEL (Required)'][data_row_idx]
     flattened['project_label'] = project_label
     
