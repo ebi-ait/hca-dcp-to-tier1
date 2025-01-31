@@ -166,7 +166,7 @@ def extract_pi(spreadsheet_obj:pd.ExcelFile):
         last_author = filtered_authors.iloc[[-1]] if not filtered_authors.empty else None
     return last_author.rename(lambda x: f'Project - Contributors_{x}', axis=1)
 
-def extract_project_tab(spreadsheet_obj:pd.ExcelFile, fields:list):
+def extract_project_info(spreadsheet_obj:pd.ExcelFile, fields:list):
     df = pd.DataFrame()
     for tab in ['Project', 'Project - Publications']:
         if tab not in spreadsheet_obj.sheet_names:
@@ -269,6 +269,9 @@ def flatten_spreadsheet(spreadsheet_obj, report_entity, links):
                        report_sheet)
     return flattened
 
+def check_merge_conflict(df, column1, column2):
+    return df[column1].notna() & df[column2].notna() & (df[column1] != df[column2])
+
 def collapse_values(series):
     return "||".join(series.dropna().unique().astype(str))
 
@@ -291,14 +294,10 @@ def main(spreadsheet_filename:str, input_dir:str, output_dir:str):
     # remove empty columns
     flattened.dropna(axis='columns',how='all', inplace=True)
 
-    # reorder flattened to use id columns first
-    orig_ids = {link.source + '_' + link.source.upper() + ' ID (Required)' for link in links_all if 'file' not in link.source}
-    orig_ids = [id for id in orig_ids if id in flattened.columns]
-    flattened = flattened[orig_ids + [col for col in flattened.columns if col not in orig_ids]]
     
     # add project label
     project_fields = ['PROJECT LABEL (Required)', 'PROJECT TITLE (Required)', 'INSDC PROJECT ACCESSION', 'GEO SERIES ACCESSION', 'ARRAYEXPRESS ACCESSION', 'INSDC STUDY ACCESSION', 'BIOSTUDIES ACCESSION', 'EGA Study/Dataset Accession(s)', 'dbGap Study Accession(s)', 'PUBLICATION TITLE (Required)', 'PUBLICATION DOI']
-    project_df = extract_project_tab(spreadsheet_obj, project_fields)
+    project_df = extract_project_info(spreadsheet_obj, project_fields)
     project_df = pd.concat([project_df, extract_pi(spreadsheet_obj).reset_index(drop=True)], axis=1)
     project_df = project_df.loc[project_df.index.repeat(len(flattened))].reset_index(drop=True)
     flattened = pd.concat([flattened, project_df], axis=1)
@@ -314,6 +313,11 @@ def main(spreadsheet_filename:str, input_dir:str, output_dir:str):
         if ingest_attribute_name not in flattened.columns:
             flattened.rename(columns={column:ingest_attribute_name}, inplace=True)
         else:
+            flattened[ingest_attribute_name] = flattened[ingest_attribute_name].combine_first(flattened[column])
+            merge_conflict = check_merge_conflict(flattened, ingest_attribute_name, column)
+            if merge_conflict.any():
+                print(f"Conflicting metadata in row {flattened[merge_conflict]}")
+                raise ValueError("Conflicting values found in the columns. Process stopped.")
             flattened.drop(labels=column, axis='columns', inplace=True)
     
     flattened_filename = f'{output_dir}/{splitext(basename(spreadsheet))[0]}_denormalised.csv'
