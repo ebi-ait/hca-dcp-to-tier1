@@ -272,6 +272,10 @@ def flatten_spreadsheet(spreadsheet_obj, report_entity, links):
 def check_merge_conflict(df, column1, column2):
     return df[column1].notna() & df[column2].notna() & (df[column1] != df[column2])
 
+def append_merge_conflicts(df, column1, column2, merge_conflict):
+    df.loc[merge_conflict, column1] = df.loc[merge_conflict, column1].astype(str) + "||" + df.loc[merge_conflict, column2].astype(str)
+    return df
+
 def collapse_values(series):
     return "||".join(series.dropna().unique().astype(str))
 
@@ -316,8 +320,8 @@ def main(spreadsheet_filename:str, input_dir:str, output_dir:str):
             flattened[ingest_attribute_name] = flattened[ingest_attribute_name].combine_first(flattened[column])
             merge_conflict = check_merge_conflict(flattened, ingest_attribute_name, column)
             if merge_conflict.any():
-                print(f"Conflicting metadata in row {flattened[merge_conflict]}")
-                raise ValueError("Conflicting values found in the columns. Process stopped.")
+                print(f"Conflicting metadata merging {column} into {ingest_attribute_name}. Appending all values with || separator.")
+                flattened = append_merge_conflicts(flattened, ingest_attribute_name, column, merge_conflict)
             flattened.drop(labels=column, axis='columns', inplace=True)
     
     flattened_filename = f'{output_dir}/{splitext(basename(spreadsheet))[0]}_denormalised.csv'
