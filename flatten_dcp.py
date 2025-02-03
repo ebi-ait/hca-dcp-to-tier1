@@ -98,7 +98,6 @@ def rename_vague_friendly_names(spreadsheet:str, first_data_line:int=FIRST_DATA_
     if any(id.value == links_all[-1].target_field for id in spreadsheet_obj.book[links_all[-1].target][1]):
         return
     print('Spreadsheet does not have appropriate fiendly names. Will try to edit accordingly')
-    spreadsheet_obj.book.save(spreadsheet.replace('.xlsx','_backup.xlsx'))
     for sheet in spreadsheet_obj.sheet_names:
         for field in spreadsheet_obj.book[sheet][1]:
             if not field.value:
@@ -164,7 +163,7 @@ def extract_pi(spreadsheet_obj:pd.ExcelFile):
     elif 'PROJECT ROLE' in contacts_df:
         filtered_authors = contacts_df.loc[contacts_df['PROJECT ROLE'] != 'data curator', present_contacts]
         last_author = filtered_authors.iloc[[-1]] if not filtered_authors.empty else None
-    return last_author.rename(lambda x: f'Project - Contributors_{x}', axis=1)
+    return last_author.rename(lambda x: f'Project - Contributors_{x}', axis=1).dropna(axis=1, how='all')
 
 def extract_project_info(spreadsheet_obj:pd.ExcelFile, fields:list):
     df = pd.DataFrame()
@@ -217,8 +216,8 @@ def merge_multiple_input_entities(worksheet:pd.DataFrame,
         result = result.drop(columns=duplicated_cols)
     else:
         # If no conflicts, fill NaN values with values from duplicate columns and drop source_field
-        result = result.drop(columns=duplicated_cols).fillna(result_na_y.rename(columns=lambda x: x.strip('_y')))
-        result.drop(columns=source_field, inplace=True)
+        result = result.fillna(result_na_y.rename(columns=lambda x: x.strip('_y')))
+        result = result.drop(columns=[source_field] + duplicated_cols)
     return result
 
 def join_worksheet(worksheet:pd.DataFrame, 
@@ -281,8 +280,6 @@ def collapse_values(series):
 
 def main(spreadsheet_filename:str, input_dir:str, output_dir:str):
     spreadsheet = f'{input_dir}/{spreadsheet_filename}'
-    spreadsheet_backup = copy(spreadsheet, spreadsheet.replace('.xlsx', '_backup.xlsx'))
-    print(f"Copied spreadsheet backup in {spreadsheet_backup}")
     remove_empty_tabs_and_fields(spreadsheet)
     rename_vague_friendly_names(spreadsheet)
     spreadsheet_obj = pd.ExcelFile(spreadsheet)
@@ -297,7 +294,6 @@ def main(spreadsheet_filename:str, input_dir:str, output_dir:str):
     
     # remove empty columns
     flattened.dropna(axis='columns',how='all', inplace=True)
-
     
     # add project label
     project_fields = ['PROJECT LABEL (Required)', 'PROJECT TITLE (Required)', 'INSDC PROJECT ACCESSION', 'GEO SERIES ACCESSION', 'ARRAYEXPRESS ACCESSION', 'INSDC STUDY ACCESSION', 'BIOSTUDIES ACCESSION', 'EGA Study/Dataset Accession(s)', 'dbGap Study Accession(s)', 'PUBLICATION TITLE (Required)', 'PUBLICATION DOI']
@@ -310,6 +306,7 @@ def main(spreadsheet_filename:str, input_dir:str, output_dir:str):
     for column in flattened.columns:
         tab, original_column = column.split('_')
         if tab not in spreadsheet_obj.sheet_names:
+            print(f'Skipping {column} since {tab} not in spreadsheet.')
             continue
         tab_df = spreadsheet_obj.parse(tab)
         data_row_idx = 2
@@ -317,11 +314,13 @@ def main(spreadsheet_filename:str, input_dir:str, output_dir:str):
         if ingest_attribute_name not in flattened.columns:
             flattened.rename(columns={column:ingest_attribute_name}, inplace=True)
         else:
-            flattened[ingest_attribute_name] = flattened[ingest_attribute_name].combine_first(flattened[column])
+            pass
+            # TODO: Arutyu spreadsheet has missing donor info
             merge_conflict = check_merge_conflict(flattened, ingest_attribute_name, column)
             if merge_conflict.any():
                 print(f"Conflicting metadata merging {column} into {ingest_attribute_name}. Appending all values with || separator.")
                 flattened = append_merge_conflicts(flattened, ingest_attribute_name, column, merge_conflict)
+            flattened[ingest_attribute_name] = flattened[ingest_attribute_name].combine_first(flattened[column])
             flattened.drop(labels=column, axis='columns', inplace=True)
     
     flattened_filename = f'{output_dir}/{splitext(basename(spreadsheet))[0]}_denormalised.csv'
