@@ -6,7 +6,6 @@ from os.path import basename, splitext
 
 from functools import partial, reduce
 from dataclasses import dataclass
-from shutil import copy
 
 import pandas as pd
 
@@ -79,38 +78,40 @@ links_all = [
     Link('Specimen from organism', 'Donor organism','INPUT DONOR ORGANISM ID (Required)','DONOR ORGANISM ID (Required)')
 ]
 
-def remove_empty_tabs_and_fields(spreadsheet:str, first_data_line:int=FIRST_DATA_LINE):
-    spreadsheet_obj = pd.ExcelFile(spreadsheet, engine_kwargs={'read_only': False})
+def remove_empty_tabs_and_fields(spreadsheet_obj:pd.ExcelFile, first_data_line:int=FIRST_DATA_LINE):
     for sheet in spreadsheet_obj.sheet_names:
         if len(spreadsheet_obj.parse(sheet)) <= first_data_line:
             spreadsheet_obj.book.remove(spreadsheet_obj.book[sheet])
-        del_cols = [i + 1 for i,x in enumerate(spreadsheet_obj.parse(sheet)[FIRST_DATA_LINE:].isna().all()) if x]
+        # is all values NA? and get index values to remove unnamed columns
+        del_df = spreadsheet_obj.parse(sheet)[first_data_line:].isna().all().reset_index()
+        del_cols = [index + 1 for index, row in del_df.iterrows() if row[0] or 'Unnamed' in row['index']]
         del_cols.reverse()
         _ = [spreadsheet_obj.book[sheet].delete_cols(col, 1) for col in del_cols]
-    spreadsheet_obj.book.save(spreadsheet)
+    return spreadsheet_obj
 
-def rename_vague_friendly_names(spreadsheet:str, first_data_line:int=FIRST_DATA_LINE):
+def rename_vague_friendly_names(spreadsheet_obj:pd.ExcelFile, first_data_line:int=FIRST_DATA_LINE):
     req_str = "(Required)"
     vague_entities = ['BIOMATERIAL', 'PROTOCOL']
     vague_entities.extend([id + ' ' + req_str for id in vague_entities])
-    spreadsheet_obj = pd.ExcelFile(spreadsheet, engine_kwargs={'read_only': False})
     # check if biomaterial ID of donor exists in donor tab
     if any(id.value == links_all[-1].target_field for id in spreadsheet_obj.book[links_all[-1].target][1]):
-        return
-    print('Spreadsheet does not have appropriate fiendly names. Will try to edit accordingly')
+        return spreadsheet_obj
+    print('Spreadsheet uses vague fiendly names. Will try to edit accordingly')
     for sheet in spreadsheet_obj.sheet_names:
         for field in spreadsheet_obj.book[sheet][1]:
             if not field.value:
                 continue
             field.value = (field.value.removesuffix(req_str).upper() +  req_str) if req_str in field.value else field.value.upper()
             if any(entity in field.value for entity in vague_entities):
-                field_program_name = spreadsheet_obj.book[sheet][first_data_line][field.column].value
+                field_program_name = spreadsheet_obj.book[sheet][first_data_line][field.column - 1].value
                 field_friendly_entity = field_program_name.split('.')[0].replace('_',' ').capitalize()
                 entity = field.value.split(' ')[0]
                 field.value = field.value.replace(entity, field_friendly_entity.upper())
                 if field_friendly_entity != sheet and entity == 'BIOMATERIAL':
                     field.value = f'INPUT {field.value}'
-    spreadsheet_obj.book.save(spreadsheet)
+                if req_str not in field.value and field.value.endswith('ID'):
+                    field.value = f'{field.value} {req_str}'
+    return spreadsheet_obj
 
 def derive_exprimental_design(report_entity, spreadsheet_obj):
     sheet_cache = {}
@@ -280,9 +281,11 @@ def collapse_values(series):
 
 def main(spreadsheet_filename:str, input_dir:str, output_dir:str):
     spreadsheet = f'{input_dir}/{spreadsheet_filename}'
-    remove_empty_tabs_and_fields(spreadsheet)
-    rename_vague_friendly_names(spreadsheet)
-    spreadsheet_obj = pd.ExcelFile(spreadsheet)
+    # open excel with write only to remove empty tabs & fields & unnamed columns
+    spreadsheet_obj = pd.ExcelFile(spreadsheet, engine_kwargs={'read_only': False})
+    spreadsheet_obj = remove_empty_tabs_and_fields(spreadsheet_obj)
+    spreadsheet_obj = rename_vague_friendly_names(spreadsheet_obj)
+    spreadsheet_obj.book.save(spreadsheet)
     report_entities = [entity for entity in ['Analysis file', 'Sequence file', 'Image file'] if entity in spreadsheet_obj.sheet_names]
         
     flattened_list = []
