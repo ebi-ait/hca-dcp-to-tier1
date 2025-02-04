@@ -88,6 +88,7 @@ def get_sex_id(term):
 def edit_sex(dcp_df):
     sex_dict = {sex: get_sex_id(sex) for sex in dcp_df['donor_organism.sex'].unique()}
     dcp_df['sex_ontology_term_id'] = dcp_df['donor_organism.sex'].replace(sex_dict)
+    dcp_df['sex_ontology_term'] = dcp_df['donor_organism.sex'].replace({'mixed': 'unknown'})
     return dcp_df
 
 def convert_to_years(age, age_unit):

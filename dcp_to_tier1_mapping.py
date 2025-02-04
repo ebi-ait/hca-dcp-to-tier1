@@ -41,6 +41,7 @@ DCP_TIER1_MAP = {
     'cell_suspension.estimated_cell_count': 'cell_number_loaded',
     'specimen_from_organism.collection_time': 'sample_collection_year',
     'library_preparation_protocol.library_construction_method.ontology': 'assay_ontology_term_id',
+    'library_preparation_protocol.library_construction_method.ontology_label': 'assay_ontology_term',
     'sequence_file.library_prep_id': 'library_preparation_batch',
     'library_sequencing_run': 'library_sequencing_run',
     # 'library_preparation_protocol.end_bias': 'sequenced_fragment',
