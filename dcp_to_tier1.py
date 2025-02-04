@@ -191,7 +191,7 @@ def main(flat_filename:str, input_dir:str, output_dir:str):
     obs = get_obs(dcp_spreadsheet)
     
     uns.to_csv(f"{output_dir}/{flat_filename.replace(r'(denormalised)|(bysample).csv', 'uns.csv')}")
-    obs.to_csv(f"{output_dir}/{flat_filename.replace('denormalised.csv', 'obs.csv')}")
+    obs.to_csv(f"{output_dir}/{flat_filename.replace(r'(denormalised)|(bysample).csv', 'obs.csv')}")
 
 if __name__ == "__main__":
     args = define_parser().parse_args()
