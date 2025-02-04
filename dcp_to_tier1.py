@@ -152,6 +152,16 @@ def edit_suspension_type(dcp_df):
     dcp_df['suspension_type'] = dcp_df['library_preparation_protocol.nucleic_acid_source'].replace(suspension_type_dict)
     return dcp_df
 
+def edit_alignment_software(dcp_df):
+    if 'analysis_protocol.alignment_software' not in dcp_df:
+        print('No alignment software provided')
+        return dcp_df
+    if 'analysis_protocol.alignment_software_version' not in dcp_df:
+        dcp_df['analysis_software'] = dcp_df['analysis_protocol.alignment_software']
+    else:
+        dcp_df['alignment_software'] = f"{dcp_df['analysis_protocol.alignment_software']} {flat_tier1['alignment_software_version'].astype(str)}"
+    return dcp_df
+
 def get_uns(dcp_df:pd.DataFrame)->pd.DataFrame:
     return pd.DataFrame({
         'title': dcp_df['project.project_core.project_title'].unique(), 
@@ -175,6 +185,7 @@ def main(flat_filename:str, input_dir:str, output_dir:str):
     dcp_spreadsheet = merge_sample_ids(dcp_spreadsheet)
     dcp_spreadsheet = edit_developement_stage(dcp_spreadsheet)
     dcp_spreadsheet = edit_suspension_type(dcp_spreadsheet)
+    dcp_spreadsheet = edit_alignment_software(dcp_spreadsheet)
 
     uns = get_uns(dcp_spreadsheet)
     obs = get_obs(dcp_spreadsheet)
