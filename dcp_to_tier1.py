@@ -171,9 +171,10 @@ def get_uns(dcp_df:pd.DataFrame)->pd.DataFrame:
         'publication_doi': dcp_df['project.publications.doi'].unique() if 'project.publications.doi' in dcp_df else None
         })
 
-def get_obs(dcp_df:pd.DataFrame):
-    return dcp_df.rename(columns=dcp_to_tier1_mapping)\
-        .drop(columns=[col for col in dcp_df if col not in tier1['obs']])
+def get_obs(dcp_df:pd.DataFrame, tier1:dict=tier1):
+    dcp_df = dcp_df.rename(columns=dcp_to_tier1_mapping)
+    drop_cols = [col for col in dcp_df if col not in tier1['obs']]
+    return dcp_df.drop(columns=drop_cols)
 
 def main(flat_filename:str, input_dir:str, output_dir:str):
     dcp_spreadsheet_filename = f'{input_dir}/{flat_filename}'
