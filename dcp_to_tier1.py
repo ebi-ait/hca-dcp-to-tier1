@@ -168,6 +168,9 @@ def edit_alignment_software(dcp_df):
     return dcp_df
 
 def edit_reference_genome(dcp_df):
+    if 'analysis_file.genome_assembly_version' not in dcp_df:
+        print('No genome assembly version provided')
+        return dcp_df
     dcp_df['reference_genome'] = dcp_df['analysis_file.genome_assembly_version']\
         .apply(lambda x: x if x == "Not Applicable" else (
             x.replace('||Not Applicable||', '||')
