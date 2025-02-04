@@ -4,11 +4,18 @@ Convert Human Cell Atlas DCP metadata from a provided dcp metadata [spreadsheet]
 ## Algorithm
 This convertion is done in the following steps.
 1. Flatten (denormalise) dcp metadata [flatten_dcp.py](flatten_dcp.py)
-    1. 
-1. Convert to Tier 1 spreadsheet [convert_to_tier_1.py](convert_to_tier_1.py)
-    1. Using the [mapping](tier1_mapping.py) convert to dcp flat metadata file to Tier 1 fields
-    1. 
-1. 
+    1. Edit friendly filenames to add consistent headers in `dcp_spreadsheet`
+    1. Derive all experimental design paths (`links_filt`), starting from all available file entities (`report_entities`: `Analysis file`, `Sequence file`, `Image file`)
+    1. Join worksheets for each of the `report_entity` present in spreadsheet
+    1. Append all joined worksheets to `flatten` data frame.
+    1. Add project metadata
+    1. Rename headers to ingest programmatic names
+    1. Export flat denormalised and grouped csv files
+1. Convert to Tier 1 spreadsheet [dcp_to_tier1.py](dcp_to_tier_1.py)
+    1. Open denormalised spreadsheet
+    1. Edit all conditinally mapped tier 1 fields
+    1. Using the [mapping dictionary](dcp_to_tier1_mapping.py) convert all other available Tier 1 metadata
+    1. Export to `uns` and `obs` csv files 
 
 
 ## Usage
@@ -16,13 +23,15 @@ Tested in python3.9. To run scripts you can run:
 ```bash
 python3 -m pip install -r requirements.txt
 python3 flatten_dcp.py -s <spreadsheet_filename> -i <input_dir> -o <output_dir>
+python3 dcp_to_tier1.py -s <flat_spreadsheet_filename> -i <input_dir> -o <output_dir>
 ```
-i.e. 
+For example: 
 ```bash
 python3 flatten_dcp.py -s AscAdiposeProgenitor_ontologies.xlsx
+python3 dcp_to_tier1.py -s AscAdiposeProgenitor_ontologies_grouped.csv
 ```
 
-### Arguments
+### flatten_dcp.py arguments
 - `--spreadsheet_filename` or `-s`: DCP metadata spreadsheet filename
     - i.e. `AscAdiposeProgenitor_ontologies.xlsx`, `IGFBP2InhibitsAdipogenesis_ontologies.xlsx`
 - `--input_dir` or `-i`: Optional input directory that contains the provided dcp spreadsheet
@@ -30,6 +39,13 @@ python3 flatten_dcp.py -s AscAdiposeProgenitor_ontologies.xlsx
 - `--output_dir` or `-o`: Optional output directory to generate the flat dcp file
     - i.e. `denormalised_spreadsheet`
 
+### dcp_to_tier1.py arguments
+- `--flat_filename` or `-s`: DCP metadata spreadsheet filename
+    - i.e. `AscAdiposeProgenitor_ontologies_grouped.csv`, `IGFBP2InhibitsAdipogenesis_ontologies_grouped.csv`
+- `--input_dir` or `-i`: Optional input directory that contains the generated flat dcp spreadsheet
+    - i.e. `denormalised_spreadsheet`
+- `--output_dir` or `-o`: Optional output directory to generate the flat tier1 file
+    - i.e. `tier1_output`
 
 ### TODO
-- Experiments that include imaged specimens and cell suspension might have an error in the flattening of spreadsheet
+- Record process location to extract `institute` & `sample_collection_site` in [flatten_dcp.py](flatten_dcp.py)
