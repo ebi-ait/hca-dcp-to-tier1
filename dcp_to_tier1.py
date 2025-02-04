@@ -245,6 +245,18 @@ def edit_manner_of_death(dcp_df):
     dcp_df['manner_of_death'] = dcp_df.apply(manner_of_death_helper, axis=1)
     return dcp_df
 
+def edit_sequenced_fragment(dcp_df):
+    seq_frag = {
+        '3 prime tag': '3 prime tag',
+        '3 prime end bias': '3 prime tag',
+        '5 prime tag': '5 prime tag',
+        '5 prime end bias': '5 prime tag',
+        'full length': 'full length'
+        # no dcp option for 'probe-based' "sequencing"
+    }
+    dcp_df['sequenced_fragment'] = dcp_df['library_preparation_protocol.end_bias'].replace(seq_frag)
+    return dcp_df
+
 def get_uns(dcp_df:pd.DataFrame)->pd.DataFrame:
     return pd.DataFrame({
         'title': dcp_df['project.project_core.project_title'].unique(), 
@@ -276,6 +288,7 @@ def main(flat_filename:str, input_dir:str, output_dir:str):
     dcp_spreadsheet = edit_diseases(dcp_spreadsheet)
     dcp_spreadsheet = edit_sampled_site_condition(dcp_spreadsheet)
     dcp_spreadsheet = edit_manner_of_death(dcp_spreadsheet)
+    dcp_spreadsheet = edit_sequenced_fragment(dcp_spreadsheet)
 
     uns = get_uns(dcp_spreadsheet)
     obs = get_obs(dcp_spreadsheet, dcp_tier1_map=DCP_TIER1_MAP, tier1=TIER1)
