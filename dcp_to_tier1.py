@@ -2,6 +2,7 @@ import argparse
 
 import requests
 import pandas as pd
+import numpy as np
 
 from dcp_to_tier1_mapping import dcp_to_tier1_mapping, tier1, age_to_dev_dict
 
@@ -88,6 +89,59 @@ def edit_sex(dcp_df):
     dcp_df['sex_ontology_term_id'] = dcp_df['donor_organism.sex'].replace(sex_dict)
     return dcp_df
 
+def convert_to_years(age, age_unit):
+    if age_unit == 'year':
+        return age
+    if isinstance(age, str) and '-' in age:
+        if age_unit == 'year':
+            return age
+        print("Can't convert range to years")
+        return age
+    age_to_years = {
+        'year': 1,
+        'month': 12,
+        'day': 365
+    }
+    try:
+        return round(int(age) / age_to_years[age_unit], 2)
+    except ValueError:
+        print("Age " + str(age) + " is not a number")
+
+def hs_age_to_dev(age, age_unit, age_to_dev_dict=age_to_dev_dict):
+    # TODO add a way to record the following options
+    # Embryonic stage = A term from the set of Carnegie stages 1-23 = (up to 8 weeks after conception; e.g. HsapDv:0000003)
+    # Fetal development = A term from the set of 9 to 38 week post-fertilization human stages = (9 weeks after conception and before birth; e.g. HsapDv:0000046)
+    if not age:
+        return None
+    age = convert_to_years(age, age_unit)
+    if isinstance(age, str) and '-' in age:
+        age = [int(age) for age in age.split('-')]
+        for age_range, label in age_to_dev_dict.items():
+            if age_range[0] <= age[0] <= age_range[1] and \
+                    age_range[0] <= age[1] <= age_range[1]:
+                return label
+            if age_range[0] <= np.mean(age) <= age_range[1]:
+                print(f"Given range {age} overlaps the acceptable ranges. Will use 'unknown'")
+                return 'unknown'
+    if isinstance(age, (int, float, str)) and age.isdigit():
+        age = float(age) if isinstance(age, str) else age
+        for age_range, label in age_to_dev_dict.items():
+            if age_range[0] <= age <= age_range[1]:
+                return label
+    print(f"Age {age} could not be mapped to accepted ranges {['-'.join(map(str, age)) for age in age_to_dev_dict.keys()]}")
+    return None
+
+def dev_stage_helper(row):
+    if 'donor_organism.organism_age' in row and row['donor_organism.biomaterial_core.ncbi_taxon_id'] == '9606':
+        dev_stage = hs_age_to_dev(row['donor_organism.organism_age'], row['donor_organism.organism_age_unit.ontology_label'])
+        if dev_stage:
+            return dev_stage
+    return row['donor_organism.development_stage.ontology']
+
+def edit_developement_stage(dcp_df):
+    dcp_df['development_stage_ontology_term_id'] = dcp_df.apply(dev_stage_helper, axis=1)
+    return dcp_df
+
 def get_uns(dcp_df:pd.DataFrame)->pd.DataFrame:
     return pd.DataFrame({
         'title': dcp_df['project.project_core.project_title'].unique(), 
@@ -109,6 +163,7 @@ def main(flat_filename:str, input_dir:str, output_dir:str):
     dcp_spreadsheet = edit_tissue_type(dcp_spreadsheet)
     dcp_spreadsheet = edit_sex(dcp_spreadsheet)
     dcp_spreadsheet = merge_sample_ids(dcp_spreadsheet)
+    dcp_spreadsheet = edit_developement_stage(dcp_spreadsheet)
 
     uns = get_uns(dcp_spreadsheet)
     obs = get_obs(dcp_spreadsheet)
