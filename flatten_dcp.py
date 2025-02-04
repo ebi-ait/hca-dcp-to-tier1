@@ -147,6 +147,7 @@ def derive_exprimental_design(report_entity, spreadsheet_obj):
     
     all_paths = []
     dfs(report_entity, [], all_paths)
+    all_paths = sorted(all_paths, key=len)
     print(f"All different paths in the experimental design starting from {report_entity} (no: {len(all_paths)}):")
     for path in all_paths:
         print('->'.join(path))
