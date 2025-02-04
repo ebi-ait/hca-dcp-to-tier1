@@ -107,7 +107,7 @@ def rename_vague_friendly_names(spreadsheet_obj:pd.ExcelFile, first_data_line:in
                 field_friendly_entity = field_program_name.split('.')[0].replace('_',' ').capitalize()
                 entity = field.value.split(' ')[0]
                 field.value = field.value.replace(entity, field_friendly_entity.upper())
-                if field_friendly_entity != sheet and entity == 'BIOMATERIAL':
+                if field_friendly_entity != sheet and entity == 'BIOMATERIAL' and sheet != 'Analysis file':
                     field.value = f'INPUT {field.value}'
                 if req_str not in field.value and field.value.endswith('ID'):
                     field.value = f'{field.value} {req_str}'
