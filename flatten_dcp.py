@@ -1,5 +1,5 @@
-## Init notebook by Amnon Khen
-## https://github.com/ebi-ait/hca-ebi-dev-team/blob/master/scripts/metadata-spreadsheet-by-file/HCA%20Project%20Metadata%20Spreadsheet.ipynb
+# Init notebook by Amnon Khen
+# https://github.com/ebi-ait/hca-ebi-dev-team/blob/master/scripts/metadata-spreadsheet-by-file/HCA%20Project%20Metadata%20Spreadsheet.ipynb
 
 import argparse
 from os.path import basename, splitext
@@ -10,8 +10,8 @@ from dataclasses import dataclass
 import pandas as pd
 
 
-SEP='\\|\\|'
-FIRST_DATA_LINE=4
+SEP = '\\|\\|'
+FIRST_DATA_LINE = 4
 
 
 def define_parser():
@@ -23,17 +23,19 @@ def define_parser():
                         dest="input_dir", type=str, required=False, help="directory of the dcp spreadsheet file")
     parser.add_argument("-o", "--output_dir", action="store", default='denormalised_spreadsheet',
                         dest="output_dir", type=str, required=False, help="directory for the denormalised spreadsheet output")
+    parser.add_argument("-g", "--group_field", action="store", default='specimen_from_organism.biomaterial_core.biomaterial_id',
+                        dest="group_field", type=str, required=False, help="field to group output with")
     return parser
+
 
 @dataclass
 class Link:
-    source:str
-    target:str
-    source_field:str
-    target_field:str = None
-    join_type:str = 'left'
-    
-    
+    source: str
+    target: str
+    source_field: str
+    target_field: str = None
+    join_type: str = 'left'
+
     def __post_init__(self):
         if self.target_field is None:
             self.target_field = self.source_field
@@ -41,43 +43,70 @@ class Link:
 
 # All available links that HCA DCP metadata schema supports
 links_all = [
-    Link('Image file', 'Imaged specimen', 'INPUT IMAGED SPECIMEN ID (Required)', 'IMAGED SPECIMEN ID (Required)'),
+    Link('Image file', 'Imaged specimen',
+         'INPUT IMAGED SPECIMEN ID (Required)', 'IMAGED SPECIMEN ID (Required)'),
     Link('Image file', 'Imaging protocol', 'IMAGING PROTOCOL ID (Required)'),
-    
-    Link('Sequence file', 'Sequencing protocol', 'SEQUENCING PROTOCOL ID (Required)'),
-    Link('Sequence file', 'Library preparation protocol', 'LIBRARY PREPARATION PROTOCOL ID (Required)'),
-    Link('Sequence file', 'Cell suspension', 'INPUT CELL SUSPENSION ID (Required)','CELL SUSPENSION ID (Required)'),
-    Link('Sequence file', 'Imaged specimen', 'INPUT IMAGED SPECIMEN ID (Required)', 'IMAGED SPECIMEN ID (Required)'),
-    
-    Link('Analysis file', 'Analysis protocol', 'ANALYSIS PROTOCOL ID (Required)', 'ANALYSIS PROTOCOL ID'),
-    Link('Analysis file', 'Library preparation protocol', 'LIBRARY PREPARATION PROTOCOL ID (Required)'),
-    Link('Analysis file', 'Sequencing protocol', 'SEQUENCING PROTOCOL ID (Required)'),
-    Link('Analysis file', 'Cell suspension', 'CELL SUSPENSION ID (Required)'),
-    Link('Analysis file', 'Imaged specimen', 'INPUT IMAGED SPECIMEN ID (Required)', 'IMAGED SPECIMEN ID (Required)'),
-    
-    Link('Cell suspension', 'Enrichment protocol','ENRICHMENT PROTOCOL ID (Required)'),
-    Link('Cell suspension', 'Dissociation protocol','DISSOCIATION PROTOCOL ID (Required)'),
-    Link('Cell suspension', 'Organoid','INPUT ORGANOID ID (Required)','ORGANOID ID (Required)'),
-    Link('Cell suspension', 'Cell line','INPUT CELL LINE ID (Required)','CELL LINE ID (Required)'),
-    Link('Cell suspension', 'Specimen from organism','INPUT SPECIMEN FROM ORGANISM ID (Required)','SPECIMEN FROM ORGANISM ID (Required)'),
-    
-    Link('Organoid', 'Differentiation protocol','DIFFERENTIATION PROTOCOL ID (Required)'),
-    Link('Organoid', 'Dissociation protocol','DISSOCIATION PROTOCOL ID (Required)'),
-    Link('Organoid', 'Cell line','INPUT CELL LINE ID (Required)','CELL LINE ID (Required)'),
-    Link('Organoid', 'Specimen from organism','INPUT SPECIMEN FROM ORGANISM ID (Required)','SPECIMEN FROM ORGANISM ID (Required)'),
-    
-    Link('Cell line', 'Enrichment protocol','ENRICHMENT PROTOCOL ID (Required)'),
-    Link('Cell line', 'Dissociation protocol','DISSOCIATION PROTOCOL ID (Required)'),
-    Link('Cell line', 'Specimen from organism','INPUT SPECIMEN FROM ORGANISM ID (Required)','SPECIMEN FROM ORGANISM ID (Required)'),
-    
-    Link('Imaged specimen', 'Specimen from organism','INPUT SPECIMEN FROM ORGANISM ID (Required)','SPECIMEN FROM ORGANISM ID (Required)'),
-    Link('Imaged specimen', 'Imaging preparation protocol', 'IMAGING PREPARATION PROTOCOL ID (Required)'),
-    
-    Link('Specimen from organism', 'Collection protocol', 'COLLECTION PROTOCOL ID (Required)'),
-    Link('Specimen from organism', 'Donor organism','INPUT DONOR ORGANISM ID (Required)','DONOR ORGANISM ID (Required)')
+
+    Link('Sequence file', 'Sequencing protocol',
+         'SEQUENCING PROTOCOL ID (Required)'),
+    Link('Sequence file', 'Library preparation protocol',
+         'LIBRARY PREPARATION PROTOCOL ID (Required)'),
+    Link('Sequence file', 'Cell suspension',
+         'INPUT CELL SUSPENSION ID (Required)', 'CELL SUSPENSION ID (Required)'),
+    Link('Sequence file', 'Imaged specimen',
+         'INPUT IMAGED SPECIMEN ID (Required)', 'IMAGED SPECIMEN ID (Required)'),
+
+    Link('Analysis file', 'Analysis protocol',
+         'ANALYSIS PROTOCOL ID (Required)', 'ANALYSIS PROTOCOL ID'),
+    Link('Analysis file', 'Library preparation protocol',
+         'LIBRARY PREPARATION PROTOCOL ID (Required)'),
+    Link('Analysis file', 'Sequencing protocol',
+         'SEQUENCING PROTOCOL ID (Required)'),
+    Link('Analysis file', 'Cell suspension', 
+         'CELL SUSPENSION ID (Required)'),
+    Link('Analysis file', 'Imaged specimen',
+         'INPUT IMAGED SPECIMEN ID (Required)', 'IMAGED SPECIMEN ID (Required)'),
+
+    Link('Cell suspension', 'Enrichment protocol',
+         'ENRICHMENT PROTOCOL ID (Required)'),
+    Link('Cell suspension', 'Dissociation protocol',
+         'DISSOCIATION PROTOCOL ID (Required)'),
+    Link('Cell suspension', 'Organoid',
+         'INPUT ORGANOID ID (Required)', 'ORGANOID ID (Required)'),
+    Link('Cell suspension', 'Cell line',
+         'INPUT CELL LINE ID (Required)', 'CELL LINE ID (Required)'),
+    Link('Cell suspension', 'Specimen from organism',
+         'INPUT SPECIMEN FROM ORGANISM ID (Required)', 'SPECIMEN FROM ORGANISM ID (Required)'),
+
+    Link('Organoid', 'Differentiation protocol',
+         'DIFFERENTIATION PROTOCOL ID (Required)'),
+    Link('Organoid', 'Dissociation protocol',
+         'DISSOCIATION PROTOCOL ID (Required)'),
+    Link('Organoid', 'Cell line', 'INPUT CELL LINE ID (Required)',
+         'CELL LINE ID (Required)'),
+    Link('Organoid', 'Specimen from organism',
+         'INPUT SPECIMEN FROM ORGANISM ID (Required)', 'SPECIMEN FROM ORGANISM ID (Required)'),
+
+    Link('Cell line', 'Enrichment protocol',
+         'ENRICHMENT PROTOCOL ID (Required)'),
+    Link('Cell line', 'Dissociation protocol',
+         'DISSOCIATION PROTOCOL ID (Required)'),
+    Link('Cell line', 'Specimen from organism',
+         'INPUT SPECIMEN FROM ORGANISM ID (Required)', 'SPECIMEN FROM ORGANISM ID (Required)'),
+
+    Link('Imaged specimen', 'Specimen from organism',
+         'INPUT SPECIMEN FROM ORGANISM ID (Required)', 'SPECIMEN FROM ORGANISM ID (Required)'),
+    Link('Imaged specimen', 'Imaging preparation protocol',
+         'IMAGING PREPARATION PROTOCOL ID (Required)'),
+
+    Link('Specimen from organism', 'Collection protocol',
+         'COLLECTION PROTOCOL ID (Required)'),
+    Link('Specimen from organism', 'Donor organism',
+         'INPUT DONOR ORGANISM ID (Required)', 'DONOR ORGANISM ID (Required)')
 ]
 
-def remove_empty_tabs_and_fields(spreadsheet_obj:pd.ExcelFile, first_data_line:int=FIRST_DATA_LINE):
+
+def remove_empty_tabs_and_fields(spreadsheet_obj: pd.ExcelFile, first_data_line: int = FIRST_DATA_LINE):
     for sheet in spreadsheet_obj.sheet_names:
         if len(spreadsheet_obj.parse(sheet)) <= first_data_line:
             spreadsheet_obj.book.remove(spreadsheet_obj.book[sheet])
@@ -88,7 +117,8 @@ def remove_empty_tabs_and_fields(spreadsheet_obj:pd.ExcelFile, first_data_line:i
         _ = [spreadsheet_obj.book[sheet].delete_cols(col, 1) for col in del_cols]
     return spreadsheet_obj
 
-def rename_vague_friendly_names(spreadsheet_obj:pd.ExcelFile, first_data_line:int=FIRST_DATA_LINE):
+
+def rename_vague_friendly_names(spreadsheet_obj: pd.ExcelFile, first_data_line: int = FIRST_DATA_LINE):
     req_str = "(Required)"
     vague_entities = ['BIOMATERIAL', 'PROTOCOL']
     vague_entities.extend([id + ' ' + req_str for id in vague_entities])
@@ -113,6 +143,7 @@ def rename_vague_friendly_names(spreadsheet_obj:pd.ExcelFile, first_data_line:in
                 if req_str not in field.value and field.value.endswith('ID'):
                     field.value = f'{field.value} {req_str}'
     return spreadsheet_obj
+
 
 def derive_exprimental_design(report_entity, spreadsheet_obj):
     sheet_cache = {}
@@ -168,7 +199,8 @@ def extract_pi(spreadsheet_obj:pd.ExcelFile):
         last_author = filtered_authors.iloc[[-1]] if not filtered_authors.empty else None
     return last_author.rename(lambda x: f'Project - Contributors_{x}', axis=1).dropna(axis=1, how='all')
 
-def extract_project_info(spreadsheet_obj:pd.ExcelFile, fields:list):
+
+def extract_project_info(spreadsheet_obj: pd.ExcelFile, fields: list):
     df = pd.DataFrame()
     for tab in ['Project', 'Project - Publications']:
         if tab not in spreadsheet_obj.sheet_names:
@@ -181,28 +213,34 @@ def extract_project_info(spreadsheet_obj:pd.ExcelFile, fields:list):
         df = pd.concat([df, sheet], axis=1)
     return df
 
-def explode_csv_col(df :pd.DataFrame, column :str, sep=',') -> pd.DataFrame:
-    cols={}
+
+def explode_csv_col(df: pd.DataFrame, column: str, sep=',') -> pd.DataFrame:
+    cols = {}
     cols[column] = df[column].str.split(sep)
     return df.assign(**cols).explode(column)
+
 
 def format_column_name(column_name, namespace):
     return f'{namespace}_{column_name}'
 
-def prefix_columns(df, prefix):
-    return df.rename(columns=lambda c:format_column_name(namespace=prefix,column_name=c))
 
-def remove_field_desc_lines(df:pd.DataFrame) -> pd.DataFrame:
+def prefix_columns(df, prefix):
+    return df.rename(columns=lambda c: format_column_name(namespace=prefix, column_name=c))
+
+
+def remove_field_desc_lines(df: pd.DataFrame) -> pd.DataFrame:
     return df[FIRST_DATA_LINE:]
 
-def merge_multiple_input_entities(worksheet:pd.DataFrame,
-                            target:pd.DataFrame, 
-                            source_field:str, 
-                            target_field:str, 
-                            link:Link):
+
+def merge_multiple_input_entities(worksheet: pd.DataFrame,
+                                  target: pd.DataFrame,
+                                  source_field: str,
+                                  target_field: str,
+                                  link: Link):
     # Perform merge operation
-    result = pd.merge(worksheet, target, how=link.join_type, left_on=source_field, right_on=target_field, suffixes=(None, '_y'))
-    
+    result = pd.merge(worksheet, target, how=link.join_type, suffixes=(None, '_y'),
+                      left_on=source_field, right_on=target_field)
+
     # Identify duplicated columns
     duplicated_cols = [col for col in result.columns if col.endswith('_y')]
     overwriting_cols = [x.strip('_y') for x in duplicated_cols]
@@ -223,9 +261,10 @@ def merge_multiple_input_entities(worksheet:pd.DataFrame,
         result = result.drop(columns=[source_field] + duplicated_cols)
     return result
 
-def join_worksheet(worksheet:pd.DataFrame, 
-                   link:Link, 
-                   spreadsheet_obj:pd.ExcelFile) -> pd.DataFrame:
+
+def join_worksheet(worksheet: pd.DataFrame,
+                   link: Link,
+                   spreadsheet_obj: pd.ExcelFile) -> pd.DataFrame:
     print(f'joining [{link.source}] to [{link.target}]')
     print(f'fields [{link.source_field}] and [{link.target_field}]')
     try:
@@ -243,8 +282,8 @@ def join_worksheet(worksheet:pd.DataFrame,
         target = explode_csv_col(target, column=target_field, sep=SEP)
         
         result = worksheet.merge(target,
-                                 how=link.join_type, 
-                                 left_on=source_field, 
+                                 how=link.join_type,
+                                 left_on=source_field,
                                  right_on=target_field)
         if [col for col in result.columns if col.endswith('_y')]:
             result = merge_multiple_input_entities(worksheet, target, source_field, target_field, link)
@@ -260,28 +299,34 @@ def join_worksheet(worksheet:pd.DataFrame,
         raise RuntimeError(err_msg) from e
     return result
 
+
 def flatten_spreadsheet(spreadsheet_obj, report_entity, links):
     if report_entity not in spreadsheet_obj.sheet_names:
         raise ValueError(f'spreadsheet does not contain {report_entity} sheet')
     report_sheet = spreadsheet_obj.parse(report_entity)
     report_sheet = prefix_columns(report_sheet, prefix=report_entity)
     report_sheet = remove_field_desc_lines(report_sheet)
-    flattened = reduce(partial(join_worksheet, spreadsheet_obj=spreadsheet_obj), 
+    flattened = reduce(partial(join_worksheet, spreadsheet_obj=spreadsheet_obj),
                        links,
                        report_sheet)
     return flattened
 
+
 def check_merge_conflict(df, column1, column2):
     return df[column1].notna() & df[column2].notna() & (df[column1] != df[column2])
+
 
 def append_merge_conflicts(df, column1, column2, merge_conflict):
     df.loc[merge_conflict, column1] = df.loc[merge_conflict, column1].astype(str) + "||" + df.loc[merge_conflict, column2].astype(str)
     return df
 
+
 def collapse_values(series):
     return "||".join(series.dropna().unique().astype(str))
 
-def main(spreadsheet_filename:str, input_dir:str, output_dir:str):
+
+def main(spreadsheet_filename: str, input_dir: str, output_dir: str, 
+         group_field: str = 'specimen_from_organism.biomaterial_core.biomaterial_id'):
     spreadsheet = f'{input_dir}/{spreadsheet_filename}'
     # open excel with write only to remove empty tabs & fields & unnamed columns
     spreadsheet_obj = pd.ExcelFile(spreadsheet, engine_kwargs={'read_only': False})
@@ -298,15 +343,16 @@ def main(spreadsheet_filename:str, input_dir:str, output_dir:str):
     flattened = pd.concat(flattened_list, axis=0, ignore_index=True)
     
     # remove empty columns
-    flattened.dropna(axis='columns',how='all', inplace=True)
+    flattened.dropna(axis='columns', how='all', inplace=True)
     
     # add project label
-    project_fields = ['PROJECT LABEL (Required)', 'PROJECT TITLE (Required)', 'INSDC PROJECT ACCESSION', 'GEO SERIES ACCESSION', 'ARRAYEXPRESS ACCESSION', 'INSDC STUDY ACCESSION', 'BIOSTUDIES ACCESSION', 'EGA Study/Dataset Accession(s)', 'dbGap Study Accession(s)', 'PUBLICATION TITLE (Required)', 'PUBLICATION DOI']
+    project_fields = ['PROJECT LABEL (Required)', 'PROJECT TITLE (Required)', 'INSDC PROJECT ACCESSION', 'GEO SERIES ACCESSION', 'ARRAYEXPRESS ACCESSION',
+                      'INSDC STUDY ACCESSION', 'BIOSTUDIES ACCESSION', 'EGA Study/Dataset Accession(s)', 'dbGap Study Accession(s)', 'PUBLICATION TITLE (Required)', 'PUBLICATION DOI']
     project_df = extract_project_info(spreadsheet_obj, project_fields)
     project_df = pd.concat([project_df, extract_pi(spreadsheet_obj).reset_index(drop=True)], axis=1)
     project_df = project_df.loc[project_df.index.repeat(len(flattened))].reset_index(drop=True)
     flattened = pd.concat([flattened, project_df], axis=1)
-    
+
     # use ingest attribute names as columns
     for column in flattened.columns:
         tab, original_column = column.split('_')
@@ -327,17 +373,21 @@ def main(spreadsheet_filename:str, input_dir:str, output_dir:str):
                 flattened = append_merge_conflicts(flattened, ingest_attribute_name, column, merge_conflict)
             flattened[ingest_attribute_name] = flattened[ingest_attribute_name].combine_first(flattened[column])
             flattened.drop(labels=column, axis='columns', inplace=True)
-    
+
     flattened_filename = f'{output_dir}/{splitext(basename(spreadsheet))[0]}_denormalised.csv'
     flattened.to_csv(flattened_filename, index=False)
 
-    flattened_bysample = flattened.groupby('specimen_from_organism.biomaterial_core.biomaterial_id').agg(collapse_values).dropna(axis=1, how='all')
-    flattened_bysample_filename = f'{output_dir}/{splitext(basename(spreadsheet))[0]}_bysample.csv'
-    flattened_bysample.to_csv(flattened_bysample_filename, index=True)
-
+    if group_field not in flattened:
+        print(f'Group field provided not in spreadsheet: {group_field}')
+        return
+    flattened_grouped = flattened.groupby(group_field).agg(collapse_values).dropna(axis=1, how='all')
+    flattened_bysample_filename = f'{output_dir}/{splitext(basename(spreadsheet))[0]}_grouped.csv'
+    flattened_grouped.to_csv(flattened_bysample_filename, index=True)
 
 
 if __name__ == "__main__":
     args = define_parser().parse_args()
 
-    main(spreadsheet_filename=args.spreadsheet_filename, input_dir=args.input_dir, output_dir=args.output_dir)
+    main(spreadsheet_filename=args.spreadsheet_filename,
+         input_dir=args.input_dir, output_dir=args.output_dir,
+         group_field=args.group_field)
