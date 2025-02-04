@@ -1,6 +1,7 @@
 import argparse
 
 import requests
+from dateutil.parser import date_parse
 import pandas as pd
 import numpy as np
 
@@ -159,7 +160,7 @@ def edit_alignment_software(dcp_df):
     if 'analysis_protocol.alignment_software_version' not in dcp_df:
         dcp_df['analysis_software'] = dcp_df['analysis_protocol.alignment_software']
     else:
-        dcp_df['alignment_software'] = f"{dcp_df['analysis_protocol.alignment_software']} {flat_tier1['alignment_software_version'].astype(str)}"
+        dcp_df['alignment_software'] = f"{dcp_df['analysis_protocol.alignment_software']} {dcp_df['alignment_software_version'].astype(str)}"
     return dcp_df
 
 def edit_reference_genome(dcp_df):
@@ -170,6 +171,22 @@ def edit_reference_genome(dcp_df):
             .replace('Not Applicable||', '')
             .replace('Not Applicable', '')
             ))
+    return dcp_df
+
+def parse_year(date_value):
+    try:
+        if isinstance(date_value, str):
+            return date_parse(date_value, fuzzy=True).year
+        if isinstance(date_value, (int, float)):
+            return date_parse(str(int(date_value)), fuzzy=True).year
+    except (ValueError, TypeError):
+        return pd.NA
+    return pd.NA
+
+def edit_collection_year(dcp_df):
+    if 'specimen_from_organism.collection_time' not in dcp_df:
+        return dcp_df
+    dcp_df['collection_year'] = dcp_df['specimen_from_organism.collection_time'].apply(parse_year)
     return dcp_df
 
 def get_uns(dcp_df:pd.DataFrame)->pd.DataFrame:
