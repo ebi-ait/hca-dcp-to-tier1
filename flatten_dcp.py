@@ -365,8 +365,7 @@ def main(spreadsheet_filename: str, input_dir: str, output_dir: str,
         if ingest_attribute_name not in flattened.columns:
             flattened.rename(columns={column:ingest_attribute_name}, inplace=True)
         else:
-            pass
-            # TODO: Arutyu spreadsheet has missing donor info
+            # TODO: Add exception for process.location for `institute` & `sample_collection_site`
             merge_conflict = check_merge_conflict(flattened, ingest_attribute_name, column)
             if merge_conflict.any():
                 print(f"Conflicting metadata merging {column} into {ingest_attribute_name}. Appending all values with || separator.")
