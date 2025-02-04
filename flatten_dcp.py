@@ -2,7 +2,6 @@
 # https://github.com/ebi-ait/hca-ebi-dev-team/blob/master/scripts/metadata-spreadsheet-by-file/HCA%20Project%20Metadata%20Spreadsheet.ipynb
 
 import argparse
-from os.path import basename, splitext
 
 from functools import partial, reduce
 from dataclasses import dataclass
@@ -373,15 +372,14 @@ def main(spreadsheet_filename: str, input_dir: str, output_dir: str,
             flattened[ingest_attribute_name] = flattened[ingest_attribute_name].combine_first(flattened[column])
             flattened.drop(labels=column, axis='columns', inplace=True)
 
-    flattened_filename = f'{output_dir}/{splitext(basename(spreadsheet))[0]}_denormalised.csv'
-    flattened.to_csv(flattened_filename, index=False)
 
     if group_field not in flattened:
         print(f'Group field provided not in spreadsheet: {group_field}')
         return
     flattened_grouped = flattened.groupby(group_field).agg(collapse_values).dropna(axis=1, how='all')
-    flattened_bysample_filename = f'{output_dir}/{splitext(basename(spreadsheet))[0]}_grouped.csv'
-    flattened_grouped.to_csv(flattened_bysample_filename, index=True)
+    
+    flattened.to_csv(f"{output_dir}/{spreadsheet_filename.replace('.xlsx', '_denormalised.csv')}", index=False)
+    flattened_grouped.to_csv(f"{output_dir}/{spreadsheet_filename.replace('.xlsx', '_grouped.csv')}", index=True)
 
 
 if __name__ == "__main__":
