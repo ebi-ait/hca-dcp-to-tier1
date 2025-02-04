@@ -207,6 +207,28 @@ def edit_diseases(dcp_df):
         dcp_df['disease_ontology_term_id'] = dcp_df['donor_organism.diseases.ontology'].str.split("\\|\\|").str[0]
     return dcp_df
 
+def edit_sampled_site_condition(dcp_df):
+    """Diseased donor and healthy specimen does not mean adjacent every time. 
+    i.e. if donor has lung cancer the heart specimen will not be adjacent
+    This needs to be inspected manually
+    """
+    if 'donor_organism.diseases.ontology_label' in dcp_df.keys() and 'specimen_from_organism.diseases.ontology_label' in dcp_df.keys():
+        dcp_df['sampled_site_condition'] = None
+        dcp_df.loc[(dcp_df['donor_organism.diseases.ontology_label'] == 'normal') & \
+                    (dcp_df['specimen_from_organism.diseases.ontology_label'] == 'normal'), 'sampled_site_condition'] = 'healthy'
+        dcp_df.loc[(dcp_df['donor_organism.diseases.ontology_label'] != 'normal') & \
+                    (dcp_df['specimen_from_organism.diseases.ontology_label'] == 'normal'), 'sampled_site_condition'] = 'adjacent'
+        dcp_df.loc[(dcp_df['specimen_from_organism.diseases.ontology_label'] != 'normal'), 'sampled_site_condition'] = 'diseased'
+        
+        if any(dcp_df['sampled_site_condition'] == 'adjacent'):
+            print("Found diseases in donor but with healthy specimen.",
+                "Please investigate if diseases of donor could apply in specimen,",
+                "in order to define healthy or adjacent sampled_site_condition.")
+            print(dcp_df.loc[dcp_df['sampled_site_condition'] == 'adjacent', \
+                                ['sampled_site_condition', 'donor_organism.diseases.ontology_label', \
+                                 'specimen_from_organism.diseases.ontology_label', 'specimen_from_organism.organ.text']])
+    return dcp_df
+
 def get_uns(dcp_df:pd.DataFrame)->pd.DataFrame:
     return pd.DataFrame({
         'title': dcp_df['project.project_core.project_title'].unique(), 
@@ -236,6 +258,7 @@ def main(flat_filename:str, input_dir:str, output_dir:str):
     dcp_spreadsheet = edit_collection_year(dcp_spreadsheet)
     dcp_spreadsheet = edit_tissue_free_text(dcp_spreadsheet)
     dcp_spreadsheet = edit_diseases(dcp_spreadsheet)
+    dcp_spreadsheet = edit_sampled_site_condition(dcp_spreadsheet)
 
     uns = get_uns(dcp_spreadsheet)
     obs = get_obs(dcp_spreadsheet)
