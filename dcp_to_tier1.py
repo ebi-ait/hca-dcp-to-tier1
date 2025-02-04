@@ -1,12 +1,9 @@
 import argparse
-import re
 
 import requests
 import pandas as pd
-import numpy as np
-from packaging.version import parse as parse_version
 
-from dcp_to_tier1_mapping import dcp_to_tier1_mapping, age_to_dev_dict
+from dcp_to_tier1_mapping import dcp_to_tier1_mapping, tier1, age_to_dev_dict
 
 
 def define_parser():
@@ -40,7 +37,8 @@ def edit_sample_source(dcp_df:pd.DataFrame):
     return dcp_df
 
 def library_to_tissue_type(row):
-    """Add tissue type for each row, based on presence of organoid, cell line or specimen ID in row. 
+    """
+    Add tissue type for each row, based on presence of organoid, cell line or specimen ID in row. 
     Organoid might go from specimen to cell line to organoid, therefore it allows all values to be present,
     cell line will have to be derived by specimen, but it's extreme rare to be derived by organoid
     specimen cannot have any other type of tissues present
@@ -66,11 +64,24 @@ def edit_tissue_type(dcp_df):
     dcp_df['tissue_type'] = dcp_df.apply(library_to_tissue_type, axis=1)
     return dcp_df
 
+def merge_sample_ids(dcp_df):
+    """
+    Sample IDs could be derived from organoid, cell line or specimen. 
+    Here we merge those samples, to use the most recent one before lib prep
+    """
+    tissue_type_dcp = [
+        'organoid.biomaterial_core.biomaterial_id',
+        'cell_line.biomaterial_core.biomaterial_id', 
+        'specimen_from_organism.biomaterial_core.biomaterial_id'
+        ]
+    merge_cols = [col for col in tissue_type_dcp if col in dcp_df]
+    dcp_df['sample_id'] = dcp_df[merge_cols].bfill(axis=1)[merge_cols[0]]
+    return dcp_df
+
 def get_sex_id(term):
     if term in ['mixed', 'unknown']:
         return 'unknown'
-    else:
-        return get_ols_id(term, 'pato')
+    return get_ols_id(term, 'pato')
 
 def edit_sex(dcp_df):
     sex_dict = {sex: get_sex_id(sex) for sex in dcp_df['donor_organism.sex'].unique()}
@@ -80,15 +91,15 @@ def edit_sex(dcp_df):
 def get_uns(dcp_df:pd.DataFrame)->pd.DataFrame:
     return pd.DataFrame({
         'title': dcp_df['project.project_core.project_title'].unique(), 
-        'study_pi': dcp_df['project.contributors.name'].unique(),
-        'contact_email': dcp_df['project.contributors.email'].unique(),
+        'study_pi': dcp_df['project.contributors.name'].unique() if 'project.contributors.name' in dcp_df else None,
+        'contact_email': dcp_df['project.contributors.email'].unique() if 'project.contributors.email' in dcp_df else None,
         'consortia': ['HCA'],
-        'publication_doi': dcp_df['project.publications.doi'].unique()
+        'publication_doi': dcp_df['project.publications.doi'].unique() if 'project.publications.doi' in dcp_df else None
         })
 
 def get_obs(dcp_df:pd.DataFrame):
     return dcp_df.rename(columns=dcp_to_tier1_mapping)\
-        .drop(columns=[col for col in dcp_df if col not in dcp_to_tier1_mapping])
+        .drop(columns=[col for col in dcp_df if col not in tier1['obs']])
 
 def main(flat_filename:str, input_dir:str, output_dir:str):
     dcp_spreadsheet_filename = f'{input_dir}/{flat_filename}'
@@ -97,11 +108,12 @@ def main(flat_filename:str, input_dir:str, output_dir:str):
     dcp_spreadsheet = edit_sample_source(dcp_spreadsheet)
     dcp_spreadsheet = edit_tissue_type(dcp_spreadsheet)
     dcp_spreadsheet = edit_sex(dcp_spreadsheet)
+    dcp_spreadsheet = merge_sample_ids(dcp_spreadsheet)
 
     uns = get_uns(dcp_spreadsheet)
     obs = get_obs(dcp_spreadsheet)
     
-    uns.to_csv(f"{output_dir}/{flat_filename.replace('denormalised.csv', 'uns.csv')}")
+    uns.to_csv(f"{output_dir}/{flat_filename.replace(r'(denormalised)|(bysample).csv', 'uns.csv')}")
     obs.to_csv(f"{output_dir}/{flat_filename.replace('denormalised.csv', 'obs.csv')}")
 
 if __name__ == "__main__":
