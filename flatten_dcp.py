@@ -317,7 +317,7 @@ def check_merge_conflict(df, column1, column2):
 
 
 def append_merge_conflicts(df, column1, column2, merge_conflict):
-    df.loc[merge_conflict, column1] = df.loc[merge_conflict, column1].astype(str) + "||" + df.loc[merge_conflict, column2].astype(str)
+    df.loc[merge_conflict, column1] = df.loc[merge_conflict, [column1, column2]].apply(lambda x: '||'.join(x.astype(str)), axis=1)
     return df
 
 
