@@ -196,10 +196,16 @@ def tissue_free_text_helper(row):
 def edit_tissue_free_text(dcp_df):
     return dcp_df.apply(tissue_free_text_helper, axis=1)
 
-# If text is identical to ontology label, then no need to include _free_text field
-flat_tier1['tissue_free_text'] = flat_tier1.apply(\
-    lambda row: '' if row['tissue_free_text_label'] == row['tissue_free_text'] \
-        else row['tissue_free_text'], axis=1)
+def edit_diseases(dcp_df):
+    # if we have multiple diseases, we would need to select one. by default select the first and print what was not selected
+    if 'donor_organism.diseases.ontology' in dcp_df:
+        unique_diseases = dcp_df['donor_organism.diseases.ontology'].str.split("\\|\\|", expand=True, n=1).drop_duplicates().dropna()
+        if unique_diseases.shape[1] > 1:
+            selected_disease = ", ".join(np.unique(unique_diseases[0]))
+            unselected_diseases = " and ".join(unique_diseases[1])
+            print(f"From multiple diseases, we will use {selected_disease}, instead of {unselected_diseases}")
+        dcp_df['disease_ontology_term_id'] = dcp_df['donor_organism.diseases.ontology'].str.split("\\|\\|").str[0]
+    return dcp_df
 
 def get_uns(dcp_df:pd.DataFrame)->pd.DataFrame:
     return pd.DataFrame({
@@ -229,6 +235,7 @@ def main(flat_filename:str, input_dir:str, output_dir:str):
     dcp_spreadsheet = edit_reference_genome(dcp_spreadsheet)
     dcp_spreadsheet = edit_collection_year(dcp_spreadsheet)
     dcp_spreadsheet = edit_tissue_free_text(dcp_spreadsheet)
+    dcp_spreadsheet = edit_diseases(dcp_spreadsheet)
 
     uns = get_uns(dcp_spreadsheet)
     obs = get_obs(dcp_spreadsheet)
