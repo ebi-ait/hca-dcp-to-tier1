@@ -50,27 +50,26 @@ links_all = [
     Link('Sequence file', 'Imaged specimen', 'INPUT IMAGED SPECIMEN ID (Required)', 'IMAGED SPECIMEN ID (Required)'),
     
     Link('Analysis file', 'Analysis protocol', 'ANALYSIS PROTOCOL ID (Required)', 'ANALYSIS PROTOCOL ID'),
-    Link('Analysis file', 'Cell suspension', 'CELL SUSPENSION ID (Required)'),
     Link('Analysis file', 'Library preparation protocol', 'LIBRARY PREPARATION PROTOCOL ID (Required)'),
     Link('Analysis file', 'Sequencing protocol', 'SEQUENCING PROTOCOL ID (Required)'),
+    Link('Analysis file', 'Cell suspension', 'CELL SUSPENSION ID (Required)'),
     Link('Analysis file', 'Imaged specimen', 'INPUT IMAGED SPECIMEN ID (Required)', 'IMAGED SPECIMEN ID (Required)'),
     
+    Link('Cell suspension', 'Enrichment protocol','ENRICHMENT PROTOCOL ID (Required)'),
+    Link('Cell suspension', 'Dissociation protocol','DISSOCIATION PROTOCOL ID (Required)'),
     Link('Cell suspension', 'Organoid','INPUT ORGANOID ID (Required)','ORGANOID ID (Required)'),
     Link('Cell suspension', 'Cell line','INPUT CELL LINE ID (Required)','CELL LINE ID (Required)'),
     Link('Cell suspension', 'Specimen from organism','INPUT SPECIMEN FROM ORGANISM ID (Required)','SPECIMEN FROM ORGANISM ID (Required)'),
-    Link('Cell suspension', 'Enrichment protocol','ENRICHMENT PROTOCOL ID (Required)'),
-    Link('Cell suspension', 'Dissociation protocol','DISSOCIATION PROTOCOL ID (Required)'),
     
-    Link('Organoid', 'Cell line','INPUT CELL LINE ID (Required)','CELL LINE ID (Required)'),
     Link('Organoid', 'Differentiation protocol','DIFFERENTIATION PROTOCOL ID (Required)'),
     Link('Organoid', 'Dissociation protocol','DISSOCIATION PROTOCOL ID (Required)'),
+    Link('Organoid', 'Cell line','INPUT CELL LINE ID (Required)','CELL LINE ID (Required)'),
     Link('Organoid', 'Specimen from organism','INPUT SPECIMEN FROM ORGANISM ID (Required)','SPECIMEN FROM ORGANISM ID (Required)'),
     
-    Link('Cell line', 'Specimen from organism','INPUT SPECIMEN FROM ORGANISM ID (Required)','SPECIMEN FROM ORGANISM ID (Required)'),
     Link('Cell line', 'Enrichment protocol','ENRICHMENT PROTOCOL ID (Required)'),
     Link('Cell line', 'Dissociation protocol','DISSOCIATION PROTOCOL ID (Required)'),
+    Link('Cell line', 'Specimen from organism','INPUT SPECIMEN FROM ORGANISM ID (Required)','SPECIMEN FROM ORGANISM ID (Required)'),
     
-    Link('Imaged specimen', 'Analysis file', 'IMAGED SPECIMEN ID (Required)'),
     Link('Imaged specimen', 'Specimen from organism','INPUT SPECIMEN FROM ORGANISM ID (Required)','SPECIMEN FROM ORGANISM ID (Required)'),
     Link('Imaged specimen', 'Imaging preparation protocol', 'IMAGING PREPARATION PROTOCOL ID (Required)'),
     
@@ -107,7 +106,9 @@ def rename_vague_friendly_names(spreadsheet_obj:pd.ExcelFile, first_data_line:in
                 field_friendly_entity = field_program_name.split('.')[0].replace('_',' ').capitalize()
                 entity = field.value.split(' ')[0]
                 field.value = field.value.replace(entity, field_friendly_entity.upper())
-                if field_friendly_entity != sheet and entity == 'BIOMATERIAL' and sheet != 'Analysis file':
+                if sheet == 'Analysis file' and field_friendly_entity == 'Cell suspension':
+                    pass
+                elif field_friendly_entity != sheet and entity == 'BIOMATERIAL':
                     field.value = f'INPUT {field.value}'
                 if req_str not in field.value and field.value.endswith('ID'):
                     field.value = f'{field.value} {req_str}'
