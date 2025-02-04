@@ -1,12 +1,11 @@
 """
-dcp_to_tier1_mapping: dictionary with mapping between DCP and Tier 1 fields
-tier1: tier 1 v0.3 list
-hca_keys: include all fields that were available for initial kidney convertion
+DCP_TIER1_MAP: dictionary with mapping between DCP and Tier 1 fields
+tier1: tier 1 v1 list
 for updated mapping:
-https://docs.google.com/spreadsheets/d/12LzqHj78CLpalRiaPIoCJcAKM1mCmzpu
+https://docs.google.com/spreadsheets/d/13oqRLh1awe7bClpX617_HQaoS8XPZV5JKPtPEff8-p4/
 """
 
-dcp_to_tier1_mapping = {
+DCP_TIER1_MAP = {
     'project.project_core.project_title': 'title',
     'project.contributors.name': 'study_pi',
     # none: 'batch_condition',
@@ -57,7 +56,7 @@ dcp_to_tier1_mapping = {
     # 'donor_organism.human_specific.ethnicity.ontology': 'self_reported_ethnicity_ontology_term_id'
     # 'donor_organism.organism_age': 'development_stage_ontology_term_id'
 }
-tier1 = {'uns': ['title', 'study_pi', 'batch_condition', 'default_embedding', 'comments'],
+TIER1 = {'uns': ['title', 'study_pi', 'batch_condition', 'default_embedding', 'comments'],
          'obs': ['sample_id', 'donor_id', 'protocol_url', 'institute', 'sample_collection_site',
                  'sample_collection_relative_time_point', 'library_id', 'library_id_repository',
                  'author_batch_notes', 'organism_ontology_term_id', 'manner_of_death',
@@ -77,7 +76,7 @@ tier1 = {'uns': ['title', 'study_pi', 'batch_condition', 'default_embedding', 'c
                  # 'sample_id_name', 'sample_id_description', 'donor_id_name', 'donor_id_description'
                  ]
          }
-hsap_age_to_dev_dict = {
+HSAP_AGE_TO_DEV_DICT = {
     # Embryonic stage = A term from the set of Carnegie stages 1-23 = (up to 8 weeks after conception; e.g. HsapDv:0000003)
     # Fetal development = A term from the set of 9 to 38 week post-fertilization human stages = (9 weeks after conception and before birth; e.g. HsapDv:0000046)
     (0, 14): 'HsapDv:0000264',

@@ -5,7 +5,7 @@ from dateutil.parser import date_parse
 import pandas as pd
 import numpy as np
 
-from dcp_to_tier1_mapping import dcp_to_tier1_mapping, tier1, hsap_age_to_dev_dict
+from dcp_to_tier1_mapping import DCP_TIER1_MAP, TIER1, HSAP_AGE_TO_DEV_DICT
 
 
 def define_parser():
@@ -108,7 +108,7 @@ def convert_to_years(age, age_unit):
     except ValueError:
         print("Age " + str(age) + " is not a number")
 
-def age_to_dev(age, age_unit, age_to_dev_dict=hsap_age_to_dev_dict):
+def age_to_dev(age, age_unit, age_to_dev_dict):
     # TODO add a way to record the following options
     # Embryonic stage = A term from the set of Carnegie stages 1-23 = (up to 8 weeks after conception; e.g. HsapDv:0000003)
     # Fetal development = A term from the set of 9 to 38 week post-fertilization human stages = (9 weeks after conception and before birth; e.g. HsapDv:0000046)
@@ -134,7 +134,9 @@ def age_to_dev(age, age_unit, age_to_dev_dict=hsap_age_to_dev_dict):
 
 def dev_stage_helper(row):
     if 'donor_organism.organism_age' in row and row['donor_organism.biomaterial_core.ncbi_taxon_id'] == '9606':
-        dev_stage = age_to_dev(row['donor_organism.organism_age'], row['donor_organism.organism_age_unit.ontology_label'])
+        dev_stage = age_to_dev(age=row['donor_organism.organism_age'], 
+                               age_unit=row['donor_organism.organism_age_unit.ontology_label'],
+                               age_to_dev_dict=HSAP_AGE_TO_DEV_DICT)
         if dev_stage:
             return dev_stage
     return row['donor_organism.development_stage.ontology']
@@ -252,8 +254,8 @@ def get_uns(dcp_df:pd.DataFrame)->pd.DataFrame:
         'publication_doi': dcp_df['project.publications.doi'].unique() if 'project.publications.doi' in dcp_df else None
         })
 
-def get_obs(dcp_df:pd.DataFrame, tier1=tier1):
-    dcp_df = dcp_df.rename(columns=dcp_to_tier1_mapping)
+def get_obs(dcp_df:pd.DataFrame, dcp_tier1_map:dict, tier1:dict):
+    dcp_df = dcp_df.rename(columns=dcp_tier1_map)
     drop_cols = [col for col in dcp_df if col not in tier1['obs']]
     return dcp_df.drop(columns=drop_cols)
 
@@ -276,7 +278,7 @@ def main(flat_filename:str, input_dir:str, output_dir:str):
     dcp_spreadsheet = edit_manner_of_death(dcp_spreadsheet)
 
     uns = get_uns(dcp_spreadsheet)
-    obs = get_obs(dcp_spreadsheet)
+    obs = get_obs(dcp_spreadsheet, dcp_tier1_map=DCP_TIER1_MAP, tier1=TIER1)
     
     uns.to_csv(f"{output_dir}/{flat_filename.replace(r'(denormalised|bysample).csv', 'uns.csv')}")
     obs.to_csv(f"{output_dir}/{flat_filename.replace(r'(denormalised|bysample).csv', 'obs.csv')}")
