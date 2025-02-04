@@ -142,6 +142,16 @@ def edit_developement_stage(dcp_df):
     dcp_df['development_stage_ontology_term_id'] = dcp_df.apply(dev_stage_helper, axis=1)
     return dcp_df
 
+def edit_suspension_type(dcp_df):
+    suspension_type_dict = {
+        'single cell': 'cell',
+        'single nucleus': 'nucleus',
+        'bulk cell': 'na',
+        'bulk nuclei': 'na'
+    }
+    dcp_df['suspension_type'] = dcp_df['library_preparation_protocol.nucleic_acid_source'].replace(suspension_type_dict)
+    return dcp_df
+
 def get_uns(dcp_df:pd.DataFrame)->pd.DataFrame:
     return pd.DataFrame({
         'title': dcp_df['project.project_core.project_title'].unique(), 
@@ -164,6 +174,7 @@ def main(flat_filename:str, input_dir:str, output_dir:str):
     dcp_spreadsheet = edit_sex(dcp_spreadsheet)
     dcp_spreadsheet = merge_sample_ids(dcp_spreadsheet)
     dcp_spreadsheet = edit_developement_stage(dcp_spreadsheet)
+    dcp_spreadsheet = edit_suspension_type(dcp_spreadsheet)
 
     uns = get_uns(dcp_spreadsheet)
     obs = get_obs(dcp_spreadsheet)
