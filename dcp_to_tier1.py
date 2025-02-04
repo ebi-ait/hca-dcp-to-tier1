@@ -190,11 +190,12 @@ def edit_collection_year(dcp_df):
 
 def tissue_free_text_helper(row):
     if 'specimen_from_organism.organ_parts.text' in row:
-        row['tissue_free_text'] = row['specimen_from_organism.organ_parts.text']
-    return row
+        return row['specimen_from_organism.organ_parts.text']
+    return None
 
 def edit_tissue_free_text(dcp_df):
-    return dcp_df.apply(tissue_free_text_helper, axis=1)
+    dcp_df['tissue_free_text'] = dcp_df.apply(tissue_free_text_helper, axis=1)
+    return dcp_df
 
 def edit_diseases(dcp_df):
     # if we have multiple diseases, we would need to select one. by default select the first and print what was not selected
@@ -229,6 +230,17 @@ def edit_sampled_site_condition(dcp_df):
                                  'specimen_from_organism.diseases.ontology_label', 'specimen_from_organism.organ.text']])
     return dcp_df
 
+def manner_of_death_helper(row):
+    if 'donor_organism.death.hardy_scale' in row and not np.isnan(row['donor_organism.death.hardy_scale']):
+        return row['donor_organism.death.hardy_scale']
+    if row['donor_organism.is_living'] == 'yes':
+        return 'not applicable'
+    return 'unknown'
+
+def edit_manner_of_death(dcp_df):
+    dcp_df['manner_of_death'] = dcp_df.apply(manner_of_death_helper, axis=1)
+    return dcp_df
+
 def get_uns(dcp_df:pd.DataFrame)->pd.DataFrame:
     return pd.DataFrame({
         'title': dcp_df['project.project_core.project_title'].unique(), 
@@ -259,6 +271,7 @@ def main(flat_filename:str, input_dir:str, output_dir:str):
     dcp_spreadsheet = edit_tissue_free_text(dcp_spreadsheet)
     dcp_spreadsheet = edit_diseases(dcp_spreadsheet)
     dcp_spreadsheet = edit_sampled_site_condition(dcp_spreadsheet)
+    dcp_spreadsheet = edit_manner_of_death(dcp_spreadsheet)
 
     uns = get_uns(dcp_spreadsheet)
     obs = get_obs(dcp_spreadsheet)
