@@ -184,10 +184,22 @@ def parse_year(date_value):
     return pd.NA
 
 def edit_collection_year(dcp_df):
-    if 'specimen_from_organism.collection_time' not in dcp_df:
-        return dcp_df
-    dcp_df['collection_year'] = dcp_df['specimen_from_organism.collection_time'].apply(parse_year)
+    if 'specimen_from_organism.collection_time' in dcp_df:
+        dcp_df['collection_year'] = dcp_df['specimen_from_organism.collection_time'].apply(parse_year)
     return dcp_df
+
+def tissue_free_text_helper(row):
+    if 'specimen_from_organism.organ_parts.text' in row:
+        row['tissue_free_text'] = row['specimen_from_organism.organ_parts.text']
+    return row
+
+def edit_tissue_free_text(dcp_df):
+    return dcp_df.apply(tissue_free_text_helper, axis=1)
+
+# If text is identical to ontology label, then no need to include _free_text field
+flat_tier1['tissue_free_text'] = flat_tier1.apply(\
+    lambda row: '' if row['tissue_free_text_label'] == row['tissue_free_text'] \
+        else row['tissue_free_text'], axis=1)
 
 def get_uns(dcp_df:pd.DataFrame)->pd.DataFrame:
     return pd.DataFrame({
@@ -215,6 +227,8 @@ def main(flat_filename:str, input_dir:str, output_dir:str):
     dcp_spreadsheet = edit_suspension_type(dcp_spreadsheet)
     dcp_spreadsheet = edit_alignment_software(dcp_spreadsheet)
     dcp_spreadsheet = edit_reference_genome(dcp_spreadsheet)
+    dcp_spreadsheet = edit_collection_year(dcp_spreadsheet)
+    dcp_spreadsheet = edit_tissue_free_text(dcp_spreadsheet)
 
     uns = get_uns(dcp_spreadsheet)
     obs = get_obs(dcp_spreadsheet)
