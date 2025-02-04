@@ -160,7 +160,7 @@ def edit_alignment_software(dcp_df):
     if 'analysis_protocol.alignment_software_version' not in dcp_df:
         dcp_df['analysis_software'] = dcp_df['analysis_protocol.alignment_software']
     else:
-        dcp_df['alignment_software'] = f"{dcp_df['analysis_protocol.alignment_software']} {dcp_df['alignment_software_version'].astype(str)}"
+        dcp_df['alignment_software'] = f"{dcp_df['analysis_protocol.alignment_software']} {dcp_df['analysis_protocol.alignment_software_version'].astype(str)}"
     return dcp_df
 
 def edit_reference_genome(dcp_df):
@@ -216,7 +216,7 @@ def get_uns(dcp_df:pd.DataFrame)->pd.DataFrame:
         'publication_doi': dcp_df['project.publications.doi'].unique() if 'project.publications.doi' in dcp_df else None
         })
 
-def get_obs(dcp_df:pd.DataFrame, tier1:dict=tier1):
+def get_obs(dcp_df:pd.DataFrame, tier1=tier1):
     dcp_df = dcp_df.rename(columns=dcp_to_tier1_mapping)
     drop_cols = [col for col in dcp_df if col not in tier1['obs']]
     return dcp_df.drop(columns=drop_cols)
