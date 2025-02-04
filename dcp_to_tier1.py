@@ -154,13 +154,15 @@ def edit_suspension_type(dcp_df):
     return dcp_df
 
 def edit_alignment_software(dcp_df):
-    if 'analysis_protocol.alignment_software' not in dcp_df:
+    software = 'analysis_protocol.alignment_software'
+    version = 'analysis_protocol.alignment_software_version'
+    if software not in dcp_df:
         print('No alignment software provided')
         return dcp_df
-    if 'analysis_protocol.alignment_software_version' not in dcp_df:
-        dcp_df['analysis_software'] = dcp_df['analysis_protocol.alignment_software']
+    if version not in dcp_df:
+        dcp_df['analysis_software'] = dcp_df[software]
     else:
-        dcp_df['alignment_software'] = f"{dcp_df['analysis_protocol.alignment_software']} {dcp_df['analysis_protocol.alignment_software_version'].astype(str)}"
+        dcp_df['alignment_software'] = dcp_df[[software, version]].apply(lambda x: " ".join(x.astype(str)), axis=1)
     return dcp_df
 
 def edit_reference_genome(dcp_df):
