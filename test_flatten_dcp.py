@@ -3,7 +3,8 @@ from io import BytesIO
 
 import pandas as pd
 import openpyxl
-from flatten_dcp import remove_empty_tabs_and_fields, FIRST_DATA_LINE
+from flatten_dcp import remove_empty_tabs_and_fields, rename_vague_friendly_names
+from flatten_dcp import FIRST_DATA_LINE
 
 SAMPLE_VALUES = {
     'Donor organism':{
@@ -96,7 +97,7 @@ class TestMetadataSpreadsheetEditing(unittest.TestCase):
         spreadsheet_obj = dcp_spreadsheet(SAMPLE_VALUES)
         spreadsheet_obj.book['Collection protocol'].delete_rows(FIRST_DATA_LINE)
         cleaned_spreadsheet = remove_empty_tabs_and_fields(spreadsheet_obj, first_data_line=FIRST_DATA_LINE)
-        self.assertNotEqual(len(SAMPLE_VALUES), len(cleaned_spreadsheet.sheet_names))
+        self.assertGreater(len(SAMPLE_VALUES), len(cleaned_spreadsheet.sheet_names))
 
     def test_remove_unnamed_field(self):
         spreadsheet_obj = dcp_spreadsheet({'Donor organism': SAMPLE_VALUES['Donor organism']})
@@ -137,6 +138,31 @@ class TestMetadataSpreadsheetEditing(unittest.TestCase):
         donor_dict = {col: value.tolist() for col, value in donor_df.items()}
         self.assertDictEqual(SAMPLE_VALUES['Donor organism'], donor_dict)
         self.assertEqual(len(SAMPLE_VALUES['Donor organism']), len(donor_dict))
+
+    # rename_vague_friendly_names
+    def test_rename_capitalised_id(self):
+        spreadsheet_obj = dcp_spreadsheet(SAMPLE_VALUES)
+        spreadsheet_obj.book['Donor organism']['A1'] = 'BIOMATERIAL ID'
+        renamed_spreadsheet = rename_vague_friendly_names(spreadsheet_obj, first_data_line=FIRST_DATA_LINE)
+        self.assertTrue(renamed_spreadsheet.book['Donor organism']['A1'].value in SAMPLE_VALUES['Donor organism'])
+
+    def test_rename_required_id(self):
+        spreadsheet_obj = dcp_spreadsheet(SAMPLE_VALUES)
+        spreadsheet_obj.book['Donor organism']['A1'] = 'BIOMATERIAL ID (Required)'
+        renamed_spreadsheet = rename_vague_friendly_names(spreadsheet_obj, first_data_line=FIRST_DATA_LINE)
+        self.assertTrue(renamed_spreadsheet.book['Donor organism']['A1'].value in SAMPLE_VALUES['Donor organism'])
+
+    def test_rename_lowercase_id(self):
+        spreadsheet_obj = dcp_spreadsheet(SAMPLE_VALUES)
+        spreadsheet_obj.book['Cell suspension']['C1'] = 'biomaterial id'
+        renamed_spreadsheet = rename_vague_friendly_names(spreadsheet_obj, first_data_line=FIRST_DATA_LINE)
+        self.assertTrue(renamed_spreadsheet.book['Cell suspension']['C1'].value in SAMPLE_VALUES['Cell suspension'])
+
+    def test_rename_incorrect_id(self):
+        spreadsheet_obj = dcp_spreadsheet(SAMPLE_VALUES)
+        spreadsheet_obj.book['Cell suspension']['B1'] = 'id of protocol'
+        renamed_spreadsheet = rename_vague_friendly_names(spreadsheet_obj, first_data_line=FIRST_DATA_LINE)
+        self.assertFalse(renamed_spreadsheet.book['Cell suspension']['B1'].value in SAMPLE_VALUES['Cell suspension'])
 
 if __name__ == "__main__":
     unittest.main()
