@@ -34,7 +34,7 @@ class Link:
     source_field: str
     target_field: str = None
     join_type: str = 'left'
-
+    
     def __post_init__(self):
         if self.target_field is None:
             self.target_field = self.source_field
@@ -45,7 +45,7 @@ links_all = [
     Link('Image file', 'Imaged specimen',
          'INPUT IMAGED SPECIMEN ID (Required)', 'IMAGED SPECIMEN ID (Required)'),
     Link('Image file', 'Imaging protocol', 'IMAGING PROTOCOL ID (Required)'),
-
+    
     Link('Sequence file', 'Sequencing protocol',
          'SEQUENCING PROTOCOL ID (Required)'),
     Link('Sequence file', 'Library preparation protocol',
@@ -54,7 +54,7 @@ links_all = [
          'INPUT CELL SUSPENSION ID (Required)', 'CELL SUSPENSION ID (Required)'),
     Link('Sequence file', 'Imaged specimen',
          'INPUT IMAGED SPECIMEN ID (Required)', 'IMAGED SPECIMEN ID (Required)'),
-
+    
     Link('Analysis file', 'Analysis protocol',
          'ANALYSIS PROTOCOL ID (Required)', 'ANALYSIS PROTOCOL ID'),
     Link('Analysis file', 'Library preparation protocol',
@@ -65,7 +65,7 @@ links_all = [
          'CELL SUSPENSION ID (Required)'),
     Link('Analysis file', 'Imaged specimen',
          'INPUT IMAGED SPECIMEN ID (Required)', 'IMAGED SPECIMEN ID (Required)'),
-
+    
     Link('Cell suspension', 'Enrichment protocol',
          'ENRICHMENT PROTOCOL ID (Required)'),
     Link('Cell suspension', 'Dissociation protocol',
@@ -76,7 +76,7 @@ links_all = [
          'INPUT CELL LINE ID (Required)', 'CELL LINE ID (Required)'),
     Link('Cell suspension', 'Specimen from organism',
          'INPUT SPECIMEN FROM ORGANISM ID (Required)', 'SPECIMEN FROM ORGANISM ID (Required)'),
-
+    
     Link('Organoid', 'Differentiation protocol',
          'DIFFERENTIATION PROTOCOL ID (Required)'),
     Link('Organoid', 'Dissociation protocol',
@@ -85,14 +85,14 @@ links_all = [
          'CELL LINE ID (Required)'),
     Link('Organoid', 'Specimen from organism',
          'INPUT SPECIMEN FROM ORGANISM ID (Required)', 'SPECIMEN FROM ORGANISM ID (Required)'),
-
+    
     Link('Cell line', 'Enrichment protocol',
          'ENRICHMENT PROTOCOL ID (Required)'),
     Link('Cell line', 'Dissociation protocol',
          'DISSOCIATION PROTOCOL ID (Required)'),
     Link('Cell line', 'Specimen from organism',
          'INPUT SPECIMEN FROM ORGANISM ID (Required)', 'SPECIMEN FROM ORGANISM ID (Required)'),
-
+    
     Link('Imaged specimen', 'Specimen from organism',
          'INPUT SPECIMEN FROM ORGANISM ID (Required)', 'SPECIMEN FROM ORGANISM ID (Required)'),
     Link('Imaged specimen', 'Imaging preparation protocol',
@@ -123,7 +123,14 @@ def rename_vague_friendly_names(spreadsheet_obj: pd.ExcelFile, first_data_line: 
     vague_entities = ['BIOMATERIAL', 'PROTOCOL']
     vague_entities.extend([id + ' ' + req_str for id in vague_entities])
     # check if biomaterial ID of donor exists in donor tab
-    if any(id.value == links_all[-1].target_field for id in spreadsheet_obj.book[links_all[-1].target][1]):
+    vague_exists = False
+    all_fields = {sheet.title: [field.value for field in sheet[1]] for sheet in spreadsheet_obj.book}
+    for link in links_all:
+        if link.source in all_fields and link.target in all_fields:
+            if link.source_field in all_fields[link.source] or link.target_field in all_fields[link.target]:
+                vague_exists = True
+                break
+    if not vague_exists:
         return spreadsheet_obj
     print('Spreadsheet uses vague fiendly names. Will try to edit accordingly')
     for sheet in spreadsheet_obj.sheet_names:
