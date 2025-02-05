@@ -29,7 +29,7 @@ DCP_TIER1_MAP = {
     # 'specimen_from_organism.diseases.ontology_label': 'sampled_site_condition_specimen',
     'specimen_from_organism.organ.ontology': 'tissue_ontology_term_id',
     'specimen_from_organism.organ.ontology_label': 'tissue_ontology_term',
-    'specimen_from_organism.organ.text': 'tissue_free_text',
+    # 'specimen_from_organism.organ.text': 'tissue_free_text',
     # 'specimen_from_organism.organ.ontology_label': 'tissue_free_text_label',
     # 'specimen_from_organism.organ_parts.text': 'tissue_free_text_parts',
     # 'specimen_from_organism.organ_parts.ontology': 'tissue_ontology_term_id_parts',
