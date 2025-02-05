@@ -3,8 +3,8 @@ from io import BytesIO
 
 import pandas as pd
 import openpyxl
-from flatten_dcp import remove_empty_tabs_and_fields, rename_vague_friendly_names
-from flatten_dcp import FIRST_DATA_LINE
+from flatten_dcp import remove_empty_tabs_and_fields, rename_vague_friendly_names, derive_exprimental_design
+from flatten_dcp import FIRST_DATA_LINE, links_all
 
 SAMPLE_VALUES = {
     'Donor organism':{
@@ -83,6 +83,22 @@ def dcp_spreadsheet(sample_values:dict, read_only=False):
     buffer.seek(0)
     
     return pd.ExcelFile(buffer, engine_kwargs={'read_only': read_only})
+
+
+def organoid_design(sample_values:dict):
+    organoid_dict = {
+    'Organoid': {
+        'ORGANOID ID (Required)': ['A unique ID for the organoid.', '', 'organoid.biomaterial_core.biomaterial_id', '', 
+                                    'organoid_1', 'organoid_2'],
+        'INPUT SPECIMEN FROM ORGANISM ID (Required)': ['A unique ID for the specimen from organism.', '', 'specimen_from_organism.biomaterial_core.biomaterial_id', '', 
+                                                        'specimen_3', 'specimen_3']
+        }
+    }
+    organoid_dict.update(sample_values)
+    organoid_dict['Cell suspension']['INPUT SPECIMEN FROM ORGANISM ID (Required)'][-2:] = ['', '']
+    organoid_dict['Cell suspension']['INPUT ORGANOID ID (Required)'] = organoid_dict['Organoid']['ORGANOID ID (Required)'][:FIRST_DATA_LINE]
+    organoid_dict['Cell suspension']['INPUT ORGANOID ID (Required)'].extend(['', '', '', '', '', 'organoid_1', 'organoid_2'])
+    return organoid_dict
 
 
 class TestMetadataSpreadsheetEditing(unittest.TestCase):
@@ -164,5 +180,30 @@ class TestMetadataSpreadsheetEditing(unittest.TestCase):
         renamed_spreadsheet = rename_vague_friendly_names(spreadsheet_obj, first_data_line=FIRST_DATA_LINE)
         self.assertFalse(renamed_spreadsheet.book['Cell suspension']['B1'].value in SAMPLE_VALUES['Cell suspension'])
 
+    # derive_exprimental_design
+    def test_derive_simple_design(self):
+        spreadsheet_obj = dcp_spreadsheet(SAMPLE_VALUES)
+        all_paths, applied_links = derive_exprimental_design('Sequence file', spreadsheet_obj)
+        expected_paths = [['Sequence file', 'Sequencing protocol'],
+                          ['Sequence file', 'Library preparation protocol'],
+                          ['Sequence file', 'Cell suspension', 'Specimen from organism', 'Collection protocol'],
+                          ['Sequence file', 'Cell suspension', 'Specimen from organism', 'Donor organism']]
+        expected_links = [links_all[i] for i in [2, 3, 4, 15, 25, 26]]
+        self.assertEqual(expected_paths, all_paths)
+        self.assertEqual(expected_links, applied_links)
+
+    def test_derive_complex_design(self):
+        spreadsheet_obj = dcp_spreadsheet(organoid_design(SAMPLE_VALUES))
+        all_paths, applied_links = derive_exprimental_design('Sequence file', spreadsheet_obj)
+        expected_paths = [['Sequence file', 'Sequencing protocol'], 
+                          ['Sequence file', 'Library preparation protocol'], 
+                          ['Sequence file', 'Cell suspension', 'Specimen from organism', 'Collection protocol'], 
+                          ['Sequence file', 'Cell suspension', 'Specimen from organism', 'Donor organism'], 
+                          ['Sequence file', 'Cell suspension', 'Organoid', 'Specimen from organism', 'Collection protocol'], 
+                          ['Sequence file', 'Cell suspension', 'Organoid', 'Specimen from organism', 'Donor organism']]
+        expected_links = [links_all[i] for i in [2, 3, 4, 13, 19, 25, 26, 15, 25, 26]]
+        self.assertEqual(expected_paths, all_paths)
+        self.assertEqual(expected_links, applied_links)
+        
 if __name__ == "__main__":
     unittest.main()
