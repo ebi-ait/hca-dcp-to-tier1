@@ -180,6 +180,10 @@ class TestMetadataSpreadsheetEditing(unittest.TestCase):
         renamed_spreadsheet = rename_vague_friendly_names(spreadsheet_obj, first_data_line=FIRST_DATA_LINE)
         self.assertFalse(renamed_spreadsheet.book['Cell suspension']['B1'].value in SAMPLE_VALUES['Cell suspension'])
 
+class TestExperimentalDesign(unittest.TestCase):
+
+    # TODO Add complexity (dissociate cell lines & specimens, multiple files, multiple input to files)
+
     # derive_exprimental_design
     def test_derive_simple_design(self):
         spreadsheet_obj = dcp_spreadsheet(SAMPLE_VALUES)
@@ -195,11 +199,11 @@ class TestMetadataSpreadsheetEditing(unittest.TestCase):
     def test_derive_complex_design(self):
         spreadsheet_obj = dcp_spreadsheet(organoid_design(SAMPLE_VALUES))
         all_paths, applied_links = derive_exprimental_design('Sequence file', spreadsheet_obj)
-        expected_paths = [['Sequence file', 'Sequencing protocol'], 
-                          ['Sequence file', 'Library preparation protocol'], 
-                          ['Sequence file', 'Cell suspension', 'Specimen from organism', 'Collection protocol'], 
-                          ['Sequence file', 'Cell suspension', 'Specimen from organism', 'Donor organism'], 
-                          ['Sequence file', 'Cell suspension', 'Organoid', 'Specimen from organism', 'Collection protocol'], 
+        expected_paths = [['Sequence file', 'Sequencing protocol'],
+                          ['Sequence file', 'Library preparation protocol'],
+                          ['Sequence file', 'Cell suspension', 'Specimen from organism', 'Collection protocol'],
+                          ['Sequence file', 'Cell suspension', 'Specimen from organism', 'Donor organism'],
+                          ['Sequence file', 'Cell suspension', 'Organoid', 'Specimen from organism', 'Collection protocol'],
                           ['Sequence file', 'Cell suspension', 'Organoid', 'Specimen from organism', 'Donor organism']]
         expected_links = [links_all[i] for i in [2, 3, 4, 13, 19, 25, 26, 15, 25, 26]]
         self.assertEqual(expected_paths, all_paths)
