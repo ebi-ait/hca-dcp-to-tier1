@@ -243,29 +243,42 @@ def merge_multiple_input_entities(worksheet: pd.DataFrame,
     # Identify duplicated columns
     duplicated_cols = [col for col in result.columns if col.endswith('_y')]
     overwriting_cols = [x.strip('_y') for x in duplicated_cols]
-    
-    # Check for conflicts between columns
-    result_na_none = result[overwriting_cols].dropna(how='all')
-    result_na_y = result[duplicated_cols].dropna(how='all')
-    
-    # exclude case a field is derived from different tabs (i.e. one cell suspension from organoid AND specimen)
-    # for selected columns, values should either everything na, or None or _y should be na
-    # If there are conflicts, print a message and drop duplicate columns
-    if not result_na_y.index.intersection(result_na_none.index).empty:
-        print(f'Multiple {link.target} for the same element. Will skip {link.target} from {link.source}')
-        result = result.drop(columns=duplicated_cols)
-    else:
-        # If no conflicts, fill NaN values with values from duplicate columns and drop source_field
-        result = result.fillna(result_na_y.rename(columns=lambda x: x.strip('_y')))
-        result = result.drop(columns=[source_field] + duplicated_cols)
-    return result
 
+    # Check for conflicts
+    for orig_col, dup_col in zip(overwriting_cols, duplicated_cols):
+        # Find rows where both original and duplicate columns have non-null values
+        conflict_mask = result[orig_col].notna() & result[dup_col].notna()
+        if conflict_mask.any():
+            identical_mask = conflict_mask & (result[orig_col] == result[dup_col])
+            combine_mask = conflict_mask & ~identical_mask
+            if combine_mask.any():
+                print(f"Combining non-identical values in {orig_col}")
+                result.loc[combine_mask, orig_col] = result.loc[combine_mask, [orig_col, dup_col]]\
+                    .apply(lambda x: '||'.join(x.astype(str)))
+            
+            # For identical values, keep the original
+            result.loc[identical_mask, orig_col] = result.loc[identical_mask, orig_col]
+        
+        # Fill NA values in original column from duplicate column
+        result[orig_col] = result[orig_col].where(
+            result[orig_col].notna(),
+            result[dup_col]
+        )
+        
+        # Drop the duplicate column
+        result = result.drop(columns=[dup_col])
+
+    # Drop the source field if it's no longer needed
+    if source_field != target_field:
+        result = result.drop(columns=[source_field])
+
+    return result
 
 def join_worksheet(worksheet: pd.DataFrame,
                    link: Link,
                    spreadsheet_obj: pd.ExcelFile) -> pd.DataFrame:
     print(f'joining [{link.source}] to [{link.target}]')
-    print(f'fields [{link.source_field}] and [{link.target_field}]')
+    # print(f'fields [{link.source_field}] and [{link.target_field}]')
     try:
         source_field = format_column_name(column_name=link.source_field, namespace=link.source)
         target_field = format_column_name(column_name=link.target_field, namespace=link.target)
@@ -289,7 +302,7 @@ def join_worksheet(worksheet: pd.DataFrame,
         else:
             result.drop(columns=target_field)
         
-        print(f'record count: original {len(worksheet)}, joined {len(result)}')
+        # print(f'record count: original {len(worksheet)}, joined {len(result)}')
         if len(result.index) == 0:
             raise RuntimeError('problem joining [{link.source}] to [{link.target}] using fields [{source_field}] and [{target_field}]: join resulted in zero rows')
         
