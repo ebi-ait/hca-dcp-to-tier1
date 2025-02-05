@@ -109,6 +109,7 @@ def remove_empty_tabs_and_fields(spreadsheet_obj: pd.ExcelFile, first_data_line:
     for sheet in spreadsheet_obj.sheet_names:
         if len(spreadsheet_obj.parse(sheet)) <= first_data_line:
             spreadsheet_obj.book.remove(spreadsheet_obj.book[sheet])
+            continue
         # is all values NA? and get index values to remove unnamed columns
         del_df = spreadsheet_obj.parse(sheet)[first_data_line:].isna().all().reset_index()
         del_cols = [index + 1 for index, row in del_df.iterrows() if row[0] or 'Unnamed' in row['index']]
