@@ -7,66 +7,67 @@ from flatten_dcp import remove_empty_tabs_and_fields, rename_vague_friendly_name
 from flatten_dcp import FIRST_DATA_LINE, links_all
 
 SAMPLE_VALUES = {
-    'Donor organism':{
-        'DONOR ORGANISM ID (Required)': ['A unique ID for the donor organism.', '', 'donor_organism.biomaterial_core.biomaterial_id', '', 
+    'Donor organism': {
+        'DONOR ORGANISM ID (Required)': ['A unique ID for the donor organism.', '', 'donor_organism.biomaterial_core.biomaterial_id', '',
                                          'donor_1', 'donor_2'],
-        'BIOLOGICAL SEX (Required)': ['The biological sex of the organism.', 'For example: Should be one of: male, female, mixed, or unknown.', 'donor_organism.sex', '', 
+        'BIOLOGICAL SEX (Required)': ['The biological sex of the organism.', 'For example: Should be one of: male, female, mixed, or unknown.', 'donor_organism.sex', '',
                                       'female', 'male'],
-        'DEVELOPMENT STAGE (Required)': ['The name of the development stage of the organism.', 'For example: human adult stage; Theiler stage 28', 'donor_organism.development_stage.text', '', 
+        'DEVELOPMENT STAGE (Required)': ['The name of the development stage of the organism.', 'For example: human adult stage; Theiler stage 28', 'donor_organism.development_stage.text', '',
                                          'human adult stage', 'human adult stage']
     },
     'Specimen from organism': {
-        'SPECIMEN FROM ORGANISM ID (Required)': ['A unique ID for the specimen from organism.', '', 'specimen_from_organism.biomaterial_core.biomaterial_id', '', 
-                                                 'specimen_1', 'specimen_2' , 'specimen_3'],
-        'ORGAN (Required)': ['The text for the term as the user provides it.', 'For example: heart; immune system', 'specimen_from_organism.organ.text', '', 
+        'SPECIMEN FROM ORGANISM ID (Required)': ['A unique ID for the specimen from organism.', '', 'specimen_from_organism.biomaterial_core.biomaterial_id', '',
+                                                 'specimen_1', 'specimen_2', 'specimen_3'],
+        'ORGAN (Required)': ['The text for the term as the user provides it.', 'For example: heart; immune system', 'specimen_from_organism.organ.text', '',
                              'heart', 'heart', 'lung'],
-        'PRESERVATION METHOD': ['The method by which a biomaterial was preserved through the use of chemicals, cold, or other means to prevent or retard biological or physical deterioration.', 'Enter \'fresh\' if not preserved. For example: cryopreservation in liquid nitrogen (dead tissue); fresh', 'specimen_from_organism.preservation_storage.preservation_method', '', 
-                             'fresh', 'cryopreservation in liquid nitrogen (dead tissue)', 'cryopreservation in liquid nitrogen (dead tissue)'],
-        'COLLECTION PROTOCOL ID (Required)': ['A unique ID for the protocol.', 'Protocol ID should have no spaces.', 'collection_protocol.protocol_core.protocol_id', '', 
+        'PRESERVATION METHOD': ['The method by which a biomaterial was preserved through the use of chemicals, cold, or other means to prevent or retard biological or physical deterioration.', 'Enter \'fresh\' if not preserved. For example: cryopreservation in liquid nitrogen (dead tissue); fresh', 'specimen_from_organism.preservation_storage.preservation_method', '',
+                                'fresh', 'cryopreservation in liquid nitrogen (dead tissue)', 'cryopreservation in liquid nitrogen (dead tissue)'],
+        'COLLECTION PROTOCOL ID (Required)': ['A unique ID for the protocol.', 'Protocol ID should have no spaces.', 'collection_protocol.protocol_core.protocol_id', '',
                                               'collection_protocol', 'collection_protocol', 'collection_protocol'],
-        'INPUT DONOR ORGANISM ID (Required)': ['A unique ID for the biomaterial.', '', 'donor_organism.biomaterial_core.biomaterial_id', '', 
-                             'donor_1', 'donor_1', 'donor_2']
+        'INPUT DONOR ORGANISM ID (Required)': ['A unique ID for the biomaterial.', '', 'donor_organism.biomaterial_core.biomaterial_id', '',
+                                               'donor_1', 'donor_1', 'donor_2']
     },
     'Cell suspension': {
-        'CELL SUSPENSION ID (Required)': ['A unique ID for the cell suspension.', '', 'cell_suspension.biomaterial_core.biomaterial_id', '', 
+        'CELL SUSPENSION ID (Required)': ['A unique ID for the cell suspension.', '', 'cell_suspension.biomaterial_core.biomaterial_id', '',
                                           'cell_suspension_1', 'cell_suspension_2', 'cell_suspension_3', 'cell_suspension_4', 'cell_suspension_5', 'cell_suspension_6'],
-        'DISSOCIATION PROTOCOL (Required)': ['unique ID for the protocol', 'Protocol ID should have no spaces', 'dissociation_protocol.protocol_core.protocol_id', '', 
+        'DISSOCIATION PROTOCOL (Required)': ['unique ID for the protocol', 'Protocol ID should have no spaces', 'dissociation_protocol.protocol_core.protocol_id', '',
                                              'dissociation_1', 'dissociation_1', 'dissociation_1', 'dissociation_1', 'dissociation_2', 'dissociation_2'],
-        'INPUT SPECIMEN FROM ORGANISM ID (Required)': ['A unique ID for the specimen from organism.', '', 'specimen_from_organism.biomaterial_core.biomaterial_id', '', 
+        'INPUT SPECIMEN FROM ORGANISM ID (Required)': ['A unique ID for the specimen from organism.', '', 'specimen_from_organism.biomaterial_core.biomaterial_id', '',
                                                        'specimen_1', 'specimen_1', 'specimen_2', 'specimen_2', 'specimen_3', 'specimen_3']
     },
     'Sequence file': {
-        'FILE NAME (Required)': ['The name of the file.', 'Include the file extension in the file name. For example: R1.fastq.gz; codebook.json', 'sequence_file.file_core.file_name', '', 'cell_suspension_1_S1_L001_I1_001.fastq.gz', 
+        'FILE NAME (Required)': ['The name of the file.', 'Include the file extension in the file name. For example: R1.fastq.gz; codebook.json', 'sequence_file.file_core.file_name', '', 'cell_suspension_1_S1_L001_I1_001.fastq.gz',
                                  'cell_suspension_1_S1_L001_I1_001.fastq.gz', 'cell_suspension_2_S1_L001_I1_001.fastq.gz', 'cell_suspension_3_S1_L001_I1_001.fastq.gz',
                                  'cell_suspension_4_S1_L001_I1_001.fastq.gz', 'cell_suspension_5_S1_L001_I1_001.fastq.gz', 'cell_suspension_6_S1_L001_I1_001.fastq.gz'],
-        'INPUT CELL SUSPENSION ID (Required)': ['A unique ID for the cell suspension.', '', 'cell_suspension.biomaterial_core.biomaterial_id', '', 
+        'INPUT CELL SUSPENSION ID (Required)': ['A unique ID for the cell suspension.', '', 'cell_suspension.biomaterial_core.biomaterial_id', '',
                                                 'cell_suspension_1', 'cell_suspension_2', 'cell_suspension_3', 'cell_suspension_4', 'cell_suspension_5', 'cell_suspension_6'],
-        'LIBRARY PREPARATION PROTOCOL ID (Required)': ['A unique ID for the protocol.', 'Protocol ID should have no spaces.', 'library_preparation_protocol.protocol_core.protocol_id', '', 
-                                                      '10x_3_v2', '10x_3_v2', '10x_3_v2', '10x_3_v2', '10x_3_v2', '10x_3_v2'],
-        'SEQUENCING PROTOCOL ID (Required)': ['A unique ID for the protocol.', 'Protocol ID should have no spaces.', 'sequencing_protocol.protocol_core.protocol_id', '', 
+        'LIBRARY PREPARATION PROTOCOL ID (Required)': ['A unique ID for the protocol.', 'Protocol ID should have no spaces.', 'library_preparation_protocol.protocol_core.protocol_id', '',
+                                                       '10x_3_v2', '10x_3_v2', '10x_3_v2', '10x_3_v2', '10x_3_v2', '10x_3_v2'],
+        'SEQUENCING PROTOCOL ID (Required)': ['A unique ID for the protocol.', 'Protocol ID should have no spaces.', 'sequencing_protocol.protocol_core.protocol_id', '',
                                               'sequencing_protocol', 'sequencing_protocol', 'sequencing_protocol', 'sequencing_protocol', 'sequencing_protocol', 'sequencing_protocol']
     },
     'Collection protocol': {
-        'COLLECTION PROTOCOL ID (Required)': ['A unique ID for the protocol.', 'Protocol ID should have no spaces.', 'collection_protocol.protocol_core.protocol_id', '', 
+        'COLLECTION PROTOCOL ID (Required)': ['A unique ID for the protocol.', 'Protocol ID should have no spaces.', 'collection_protocol.protocol_core.protocol_id', '',
                                               'collection_protocol'],
-        'COLLECTION METHOD': ['The name of a process type being used.', 'For example: enzymatic dissociation; blood draw', 'collection_protocol.method.text', '', 
+        'COLLECTION METHOD': ['The name of a process type being used.', 'For example: enzymatic dissociation; blood draw', 'collection_protocol.method.text', '',
                               'surgical resection']
     },
     'Library preparation protocol': {
-        'LIBRARY PREPARATION PROTOCOL ID (Required)': ['A unique ID for the protocol.', 'Protocol ID should have no spaces.', 'library_preparation_protocol.protocol_core.protocol_id', '', 
+        'LIBRARY PREPARATION PROTOCOL ID (Required)': ['A unique ID for the protocol.', 'Protocol ID should have no spaces.', 'library_preparation_protocol.protocol_core.protocol_id', '',
                                                        '10x_3_v2'],
-        'LIBRARY CONSTRUCTION (Required)': ['The name of a library construction approach being used.', 'For example: 10X v2 sequencing; Smart-seq2','library_preparation_protocol.library_construction_method.text', '',
+        'LIBRARY CONSTRUCTION (Required)': ['The name of a library construction approach being used.', 'For example: 10X v2 sequencing; Smart-seq2', 'library_preparation_protocol.library_construction_method.text', '',
                                             "10x 3' v2"]
-    },                                            
+    },
     'Sequencing protocol': {
-        'SEQUENCING PROTOCOL ID (Required)': ['A unique ID for the protocol.', 'Protocol ID should have no spaces.', 'sequencing_protocol.protocol_core.protocol_id', '', 
+        'SEQUENCING PROTOCOL ID (Required)': ['A unique ID for the protocol.', 'Protocol ID should have no spaces.', 'sequencing_protocol.protocol_core.protocol_id', '',
                                               'sequencing_protocol'],
-        'INSTRUMENT': ['The full name of the instrument used.', 'For example: Illumina HiSeq 2500; ONT MinION', 'sequencing_protocol.instrument_manufacturer_model.text', '', 
+        'INSTRUMENT': ['The full name of the instrument used.', 'For example: Illumina HiSeq 2500; ONT MinION', 'sequencing_protocol.instrument_manufacturer_model.text', '',
                        'Illumina NovaSeq 6000']
     }
 }
 
-def dcp_spreadsheet(sample_values:dict, read_only=False):
+
+def dcp_spreadsheet(sample_values: dict, read_only=False):
     wb = openpyxl.Workbook()
     default_sheet = wb.active
     wb.remove(default_sheet)
@@ -85,13 +86,13 @@ def dcp_spreadsheet(sample_values:dict, read_only=False):
     return pd.ExcelFile(buffer, engine_kwargs={'read_only': read_only})
 
 
-def organoid_design(sample_values:dict):
+def organoid_design(sample_values: dict):
     organoid_dict = {
-    'Organoid': {
-        'ORGANOID ID (Required)': ['A unique ID for the organoid.', '', 'organoid.biomaterial_core.biomaterial_id', '', 
-                                    'organoid_1', 'organoid_2'],
-        'INPUT SPECIMEN FROM ORGANISM ID (Required)': ['A unique ID for the specimen from organism.', '', 'specimen_from_organism.biomaterial_core.biomaterial_id', '', 
-                                                        'specimen_3', 'specimen_3']
+        'Organoid': {
+            'ORGANOID ID (Required)': ['A unique ID for the organoid.', '', 'organoid.biomaterial_core.biomaterial_id', '',
+                                       'organoid_1', 'organoid_2'],
+            'INPUT SPECIMEN FROM ORGANISM ID (Required)': ['A unique ID for the specimen from organism.', '', 'specimen_from_organism.biomaterial_core.biomaterial_id', '',
+                                                           'specimen_3', 'specimen_3']
         }
     }
     organoid_dict.update(sample_values)
@@ -190,24 +191,31 @@ class TestExperimentalDesign(unittest.TestCase):
         all_paths, applied_links = derive_exprimental_design('Sequence file', spreadsheet_obj)
         expected_paths = [['Sequence file', 'Sequencing protocol'],
                           ['Sequence file', 'Library preparation protocol'],
-                          ['Sequence file', 'Cell suspension', 'Specimen from organism', 'Collection protocol'],
-                          ['Sequence file', 'Cell suspension', 'Specimen from organism', 'Donor organism']]
+                          ['Sequence file', 'Cell suspension', 
+                              'Specimen from organism', 'Collection protocol'],
+                          ['Sequence file', 'Cell suspension', 
+                              'Specimen from organism', 'Donor organism']]
         expected_links = [links_all[i] for i in [2, 3, 4, 15, 25, 26]]
         self.assertEqual(expected_paths, all_paths)
         self.assertEqual(expected_links, applied_links)
 
     def test_derive_complex_design(self):
         spreadsheet_obj = dcp_spreadsheet(organoid_design(SAMPLE_VALUES))
-        all_paths, applied_links = derive_exprimental_design('Sequence file', spreadsheet_obj)
+        all_paths, applied_links = derive_exprimental_design(
+            'Sequence file', spreadsheet_obj)
         expected_paths = [['Sequence file', 'Sequencing protocol'],
                           ['Sequence file', 'Library preparation protocol'],
-                          ['Sequence file', 'Cell suspension', 'Specimen from organism', 'Collection protocol'],
-                          ['Sequence file', 'Cell suspension', 'Specimen from organism', 'Donor organism'],
-                          ['Sequence file', 'Cell suspension', 'Organoid', 'Specimen from organism', 'Collection protocol'],
+                          ['Sequence file', 'Cell suspension',
+                              'Specimen from organism', 'Collection protocol'],
+                          ['Sequence file', 'Cell suspension',
+                              'Specimen from organism', 'Donor organism'],
+                          ['Sequence file', 'Cell suspension', 'Organoid',
+                              'Specimen from organism', 'Collection protocol'],
                           ['Sequence file', 'Cell suspension', 'Organoid', 'Specimen from organism', 'Donor organism']]
         expected_links = [links_all[i] for i in [2, 3, 4, 13, 19, 25, 26, 15, 25, 26]]
         self.assertEqual(expected_paths, all_paths)
         self.assertEqual(expected_links, applied_links)
-        
+
+
 if __name__ == "__main__":
     unittest.main()
