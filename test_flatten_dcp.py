@@ -157,7 +157,7 @@ class TestMetadataSpreadsheetEditing(unittest.TestCase):
         self.assertEqual(len(SAMPLE_VALUES['Donor organism']), len(donor_dict))
 
     # rename_vague_friendly_names
-    # TODO Add test to avoid incorrect parsing of protocol id in i.e collection PROTOCOL ID
+    # TODO Add test to catch inconsistent analysis file input colnames (NO input in links)
     def test_rename_capitalised_id(self):
         spreadsheet_obj = dcp_spreadsheet(SAMPLE_VALUES)
         spreadsheet_obj.book['Donor organism']['A1'] = 'BIOMATERIAL ID'

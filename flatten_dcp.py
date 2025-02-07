@@ -139,6 +139,8 @@ def rename_vague_friendly_names(spreadsheet_obj: pd.ExcelFile, first_data_line: 
             if not field.value:
                 continue
             field.value = (field.value.removesuffix(req_str).upper() +  req_str) if req_str in field.value else field.value.upper()
+            if sheet == 'Analysis file':
+                field.value = field.value.replace('INPUT ', '')
             if any(entity == field.value for entity in vague_entities):
                 field_program_name = spreadsheet_obj.book[sheet][first_data_line][field.column - 1].value
                 field_friendly_entity = field_program_name.split('.')[0].replace('_',' ').capitalize()
