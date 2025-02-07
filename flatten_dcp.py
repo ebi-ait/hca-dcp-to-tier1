@@ -128,7 +128,7 @@ def rename_vague_friendly_names(spreadsheet_obj: pd.ExcelFile, first_data_line: 
     all_fields = {sheet.title: [field.value for field in sheet[1]] for sheet in spreadsheet_obj.book}
     for link in links_all:
         if link.source in all_fields and link.target in all_fields:
-            if link.source_field in all_fields[link.source] or link.target_field in all_fields[link.target]:
+            if link.source_field not in all_fields[link.source] or link.target_field not in all_fields[link.target]:
                 vague_exists = True
                 break
     if not vague_exists:
