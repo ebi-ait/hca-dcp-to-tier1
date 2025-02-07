@@ -172,7 +172,7 @@ def edit_reference_genome(dcp_df):
     if 'analysis_file.genome_assembly_version' not in dcp_df:
         print('No genome assembly version provided')
         return dcp_df
-    dcp_df['reference_genome'] = dcp_df['analysis_file.genome_assembly_version']\
+    dcp_df['reference_genome'] = dcp_df['analysis_file.genome_assembly_version'].dropna()\
         .apply(lambda x: x if x == "Not Applicable" else (
             x.replace('||Not Applicable||', '||')
             .replace('||Not Applicable', '')
