@@ -61,7 +61,7 @@ TIER1 = {'uns': ['title', 'study_pi', 'batch_condition', 'default_embedding', 'c
          'obs': ['sample_id', 'donor_id', 'protocol_url', 'institute', 'sample_collection_site',
                  'sample_collection_relative_time_point', 'library_id', 'library_id_repository',
                  'author_batch_notes', 'organism_ontology_term_id', 'manner_of_death',
-                 'sample_source', 'sex_ontology_term_id', 'sex_ontology_term'
+                 'sample_source', 'sex_ontology_term_id', 'sex_ontology_term', 
                  'sample_collection_method', 'tissue_type', 'sampled_site_condition', 
 				 'tissue_ontology_term_id', 'tissue_ontology_term', 'tissue_free_text', 
 				 'sample_preservation_method', 'suspension_type', 'cell_enrichment', 
@@ -70,8 +70,9 @@ TIER1 = {'uns': ['title', 'study_pi', 'batch_condition', 'default_embedding', 'c
                  'library_sequencing_run', 'sequenced_fragment', 'sequencing_platform',
                  'is_primary_data', 'reference_genome', 'gene_annotation_version',
                  'alignment_software', 'intron_inclusion', 'author_cell_type',
-                 'cell_type_ontology_term_id', 'disease_ontology_term_id',
-                 'self_reported_ethnicity_ontology_term_id', 'development_stage_ontology_term_id',
+                 'cell_type_ontology_term_id', 'disease_ontology_term_id', 'disease_ontology_term',
+                 'self_reported_ethnicity_ontology_term_id', 
+                 'development_stage_ontology_term_id', 'development_stage_ontology_term'
                  # helper fields
                  # 'manner_of_death_string', 'library_id_repository_name', 'library_id_repository_description',
                  # 'sample_id_name', 'sample_id_description', 'donor_id_name', 'donor_id_description'

@@ -23,7 +23,7 @@ def define_parser():
     parser.add_argument("-o", "--output_dir", action="store", default='denormalised_spreadsheet',
                         dest="output_dir", type=str, required=False, help="directory for the denormalised spreadsheet output")
     parser.add_argument("-g", "--group_field", action="store", default='specimen_from_organism.biomaterial_core.biomaterial_id',
-                        dest="group_field", type=str, required=False, help="field to group output with")
+                        dest="group_field", type=str, required=False, help="field to group output with, use empty to have denormalised")
     return parser
 
 
@@ -402,12 +402,15 @@ def main(spreadsheet_filename: str, input_dir: str, output_dir: str,
             flattened.drop(labels=column, axis='columns', inplace=True)
 
 
+    
+    if group_field == '':
+        flattened.to_csv(f"{output_dir}/{spreadsheet_filename.replace('.xlsx', '_denormalised.csv')}", index=False)
+        return
     if group_field not in flattened:
-        print(f'Group field provided not in spreadsheet: {group_field}')
+        print(f'Group field provided not in spreadsheet: {group_field}\nProviding denormalised spreadsheet')
+        flattened.to_csv(f"{output_dir}/{spreadsheet_filename.replace('.xlsx', '_denormalised.csv')}", index=False)
         return
     flattened_grouped = flattened.groupby(group_field).agg(collapse_values).dropna(axis=1, how='all')
-    
-    flattened.to_csv(f"{output_dir}/{spreadsheet_filename.replace('.xlsx', '_denormalised.csv')}", index=False)
     flattened_grouped.to_csv(f"{output_dir}/{spreadsheet_filename.replace('.xlsx', '_grouped.csv')}", index=True)
 
 

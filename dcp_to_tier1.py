@@ -1,7 +1,9 @@
 import argparse
 
 import requests
+import re
 from dateutil.parser import date_parse
+
 import pandas as pd
 import numpy as np
 
@@ -26,6 +28,24 @@ def get_ols_id(term, ontology):
         print(f"No ontology found for {term} in {ontology}")
         return term
     return response["response"]["docs"][0]['obo_id']
+
+def get_ols_label(ontology_id, only_label=True, ontology=None):
+    if not re.match(r"\w+:\d+", ontology_id):
+        return ontology_id
+    if ontology_id is np.nan:
+        return ontology_id
+    ontology_name = ontology if ontology else ontology_id.split(":")[0].lower()
+    ontology_term = ontology_id.replace(":", "_")
+    url = f'https://www.ebi.ac.uk/ols4/api/ontologies/{ontology_name}/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252F{ontology_term}'
+    if ontology_name == 'efo':
+        url = f'https://www.ebi.ac.uk/ols4/api/ontologies/{ontology_name}/terms/http%253A%252F%252Fwww.ebi.ac.uk%252Fefo%252F{ontology_term}'
+    try:
+        response = requests.get(url, timeout=10)
+        results = response.json()
+    except ConnectionError as e:
+        print(e)
+        return ontology_id
+    return results['label'] if only_label else results
 
 def edit_sample_source(dcp_df:pd.DataFrame):
     if 'donor_organism.is_living' not in dcp_df:
@@ -135,7 +155,7 @@ def age_to_dev(age, age_unit, age_to_dev_dict):
 
 def dev_stage_helper(row):
     if 'donor_organism.organism_age' in row and row['donor_organism.biomaterial_core.ncbi_taxon_id'] == '9606':
-        dev_stage = age_to_dev(age=row['donor_organism.organism_age'], 
+        dev_stage = age_to_dev(age=row['donor_organism.organism_age'],
                                age_unit=row['donor_organism.organism_age_unit.ontology_label'],
                                age_to_dev_dict=HSAP_AGE_TO_DEV_DICT)
         if dev_stage:
@@ -144,6 +164,8 @@ def dev_stage_helper(row):
 
 def edit_developement_stage(dcp_df):
     dcp_df['development_stage_ontology_term_id'] = dcp_df.apply(dev_stage_helper, axis=1)
+    dev_dict = {dev: get_ols_label(dev) for dev in dcp_df['development_stage_ontology_term_id'].unique() if dev != 'unknown'}
+    dcp_df['development_stage_ontology_term'] = dcp_df['development_stage_ontology_term_id'].replace(dev_dict)
     return dcp_df
 
 def edit_suspension_type(dcp_df):
@@ -207,13 +229,14 @@ def edit_tissue_free_text(dcp_df):
 
 def edit_diseases(dcp_df):
     # if we have multiple diseases, we would need to select one. by default select the first and print what was not selected
-    if 'donor_organism.diseases.ontology' in dcp_df:
-        unique_diseases = dcp_df['donor_organism.diseases.ontology'].str.split("\\|\\|", expand=True, n=1).drop_duplicates().dropna()
+    if 'donor_organism.diseases.ontology_label' in dcp_df:
+        unique_diseases = dcp_df['donor_organism.diseases.ontology_label'].str.split("\\|\\|", expand=True, n=1).drop_duplicates().dropna()
         if unique_diseases.shape[1] > 1:
             selected_disease = ", ".join(np.unique(unique_diseases[0]))
             unselected_diseases = " and ".join(unique_diseases[1])
             print(f"From multiple diseases, we will use {selected_disease}, instead of {unselected_diseases}")
         dcp_df['disease_ontology_term_id'] = dcp_df['donor_organism.diseases.ontology'].str.split("\\|\\|").str[0]
+        dcp_df['disease_ontology_term'] = dcp_df['donor_organism.diseases.ontology_label'].str.split("\\|\\|").str[0]
     return dcp_df
 
 def edit_sampled_site_condition(dcp_df):
@@ -272,8 +295,8 @@ def get_uns(dcp_df:pd.DataFrame)->pd.DataFrame:
 
 def get_obs(dcp_df:pd.DataFrame, dcp_tier1_map:dict, tier1:dict):
     dcp_df = dcp_df.rename(columns=dcp_tier1_map)
-    drop_cols = [col for col in dcp_df if col not in tier1['obs']]
-    return dcp_df.drop(columns=drop_cols)
+    keep_cols = [col for col in tier1['obs'] if col in dcp_df]
+    return dcp_df[keep_cols]
 
 def main(flat_filename:str, input_dir:str, output_dir:str):
     dcp_spreadsheet_filename = f'{input_dir}/{flat_filename}'
@@ -297,8 +320,8 @@ def main(flat_filename:str, input_dir:str, output_dir:str):
     uns = get_uns(dcp_spreadsheet)
     obs = get_obs(dcp_spreadsheet, dcp_tier1_map=DCP_TIER1_MAP, tier1=TIER1)
     
-    uns.to_csv(f"{output_dir}/{flat_filename.replace(r'(denormalised|bysample).csv', 'uns.csv')}")
-    obs.to_csv(f"{output_dir}/{flat_filename.replace(r'(denormalised|bysample).csv', 'obs.csv')}")
+    uns.to_csv(f"{output_dir}/{flat_filename.replace(r'(denormalised|grouped).csv', 'uns.csv')}")
+    obs.to_csv(f"{output_dir}/{flat_filename.replace(r'(denormalised|grouped).csv', 'obs.csv')}")
 
 if __name__ == "__main__":
     args = define_parser().parse_args()
