@@ -121,7 +121,8 @@ def remove_empty_tabs_and_fields(spreadsheet_obj: pd.ExcelFile, first_data_line:
 def rename_vague_friendly_names(spreadsheet_obj: pd.ExcelFile, first_data_line: int = FIRST_DATA_LINE):
     req_str = "(Required)"
     vague_entities = ['BIOMATERIAL', 'PROTOCOL']
-    vague_entities.extend([id + ' ' + req_str for id in vague_entities])
+    vague_entities = [id + suffix for id in vague_entities for suffix in [' ID', ' NAME', ' DESCRIPTION']]
+    vague_entities.extend([id + ' ' + req_str for id in vague_entities if id.endswith('ID')])
     # check if biomaterial ID of donor exists in donor tab
     vague_exists = False
     all_fields = {sheet.title: [field.value for field in sheet[1]] for sheet in spreadsheet_obj.book}
@@ -138,7 +139,7 @@ def rename_vague_friendly_names(spreadsheet_obj: pd.ExcelFile, first_data_line: 
             if not field.value:
                 continue
             field.value = (field.value.removesuffix(req_str).upper() +  req_str) if req_str in field.value else field.value.upper()
-            if any(entity in field.value for entity in vague_entities):
+            if any(entity == field.value for entity in vague_entities):
                 field_program_name = spreadsheet_obj.book[sheet][first_data_line][field.column - 1].value
                 field_friendly_entity = field_program_name.split('.')[0].replace('_',' ').capitalize()
                 entity = field.value.split(' ')[0]

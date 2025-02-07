@@ -157,6 +157,7 @@ class TestMetadataSpreadsheetEditing(unittest.TestCase):
         self.assertEqual(len(SAMPLE_VALUES['Donor organism']), len(donor_dict))
 
     # rename_vague_friendly_names
+    # TODO Add test to avoid incorrect parsing of protocol id in i.e collection PROTOCOL ID
     def test_rename_capitalised_id(self):
         spreadsheet_obj = dcp_spreadsheet(SAMPLE_VALUES)
         spreadsheet_obj.book['Donor organism']['A1'] = 'BIOMATERIAL ID'
@@ -174,6 +175,18 @@ class TestMetadataSpreadsheetEditing(unittest.TestCase):
         spreadsheet_obj.book['Cell suspension']['C1'] = 'biomaterial id'
         renamed_spreadsheet = rename_vague_friendly_names(spreadsheet_obj, first_data_line=FIRST_DATA_LINE)
         self.assertTrue(renamed_spreadsheet.book['Cell suspension']['C1'].value in SAMPLE_VALUES['Cell suspension'])
+
+    def test_rename_exact_protocol_id(self):
+        spreadsheet_obj = dcp_spreadsheet(SAMPLE_VALUES)
+        spreadsheet_obj.book['Collection protocol']['A1'] = 'Protocol ID'
+        renamed_spreadsheet = rename_vague_friendly_names(spreadsheet_obj, first_data_line=FIRST_DATA_LINE)
+        self.assertTrue(renamed_spreadsheet.book['Collection protocol']['A1'].value in SAMPLE_VALUES['Collection protocol'])
+
+    def test_rename_partial_protocol_id(self):
+        spreadsheet_obj = dcp_spreadsheet(SAMPLE_VALUES)
+        spreadsheet_obj.book['Collection protocol']['A1'] = 'Collection protocol id (Required)'
+        renamed_spreadsheet = rename_vague_friendly_names(spreadsheet_obj, first_data_line=FIRST_DATA_LINE)
+        self.assertTrue(renamed_spreadsheet.book['Collection protocol']['A1'].value in SAMPLE_VALUES['Collection protocol'])
 
     def test_rename_incorrect_id(self):
         spreadsheet_obj = dcp_spreadsheet(SAMPLE_VALUES)
