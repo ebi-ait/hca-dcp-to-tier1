@@ -379,13 +379,18 @@ def main(spreadsheet_filename: str, input_dir: str, output_dir: str,
         if tab not in spreadsheet_obj.sheet_names:
             print(f'Skipping {column} since {tab} not in spreadsheet.')
             continue
+        if column == 'Specimen from organism_LOCATION':
+            flattened.rename(columns={column:'specimen_from_organism.sample_collection_site'}, inplace=True)
+            continue
+        if column.endswith('_LOCATION') and 'cell_suspension.institute' not in flattened.columns:
+            flattened.rename(columns={column:'cell_suspension.institute'}, inplace=True)
+            continue
         tab_df = spreadsheet_obj.parse(tab)
         data_row_idx = 2
-        ingest_attribute_name = tab_df[original_column][data_row_idx]
+        ingest_attribute_name = tab_df[original_column][data_row_idx] if not column.endswith('_LOCATION') else 'cell_suspension.institute'
         if ingest_attribute_name not in flattened.columns:
             flattened.rename(columns={column:ingest_attribute_name}, inplace=True)
         else:
-            # TODO: Add exception for process.location for `institute` & `sample_collection_site`
             merge_conflict = check_merge_conflict(flattened, ingest_attribute_name, column)
             if merge_conflict.any():
                 print(f"Conflicting metadata merging {column} into {ingest_attribute_name}. Appending all values with || separator.")
