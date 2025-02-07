@@ -125,7 +125,7 @@ def age_to_dev(age, age_unit, age_to_dev_dict):
             if age_range[0] <= np.mean(age) <= age_range[1]:
                 print(f"Given range {age} overlaps the acceptable ranges. Will use 'unknown'")
                 return 'unknown'
-    if isinstance(age, (int, float, str)) and age.isdigit():
+    if isinstance(age, (int, float, str)) and (age.isdigit() or age.replace('.', '', 1).isdigit()):
         age = float(age) if isinstance(age, str) else age
         for age_range, label in age_to_dev_dict.items():
             if age_range[0] <= age <= age_range[1]:
