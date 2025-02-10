@@ -11,6 +11,8 @@ import pandas as pd
 
 SEP = '\\|\\|'
 FIRST_DATA_LINE = 4
+INPUT_DIR = 'data/dcp_spreadsheet'
+OUTPUT_DIR = 'data/denormalised_spreadsheet'
 
 
 def define_parser():
@@ -18,10 +20,6 @@ def define_parser():
     parser = argparse.ArgumentParser(description="Parser for the arguments")
     parser.add_argument("-s", "--spreadsheet_filename", action="store",
                         dest="spreadsheet_filename", type=str, required=True, help="dcp spreadsheet filename")
-    parser.add_argument("-i", "--input_dir", action="store", default='dcp_spreadsheet',
-                        dest="input_dir", type=str, required=False, help="directory of the dcp spreadsheet file")
-    parser.add_argument("-o", "--output_dir", action="store", default='denormalised_spreadsheet',
-                        dest="output_dir", type=str, required=False, help="directory for the denormalised spreadsheet output")
     parser.add_argument("-g", "--group_field", action="store", default='specimen_from_organism.biomaterial_core.biomaterial_id',
                         dest="group_field", type=str, required=False, help="field to group output with, use empty to have denormalised")
     return parser
@@ -416,7 +414,6 @@ def main(spreadsheet_filename: str, input_dir: str, output_dir: str,
 
 if __name__ == "__main__":
     args = define_parser().parse_args()
-
     main(spreadsheet_filename=args.spreadsheet_filename,
-         input_dir=args.input_dir, output_dir=args.output_dir,
+         input_dir=INPUT_DIR, output_dir=OUTPUT_DIR,
          group_field=args.group_field)

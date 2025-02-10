@@ -3,8 +3,10 @@ from io import BytesIO
 
 import pandas as pd
 import openpyxl
-from flatten_dcp import remove_empty_tabs_and_fields, rename_vague_friendly_names, derive_exprimental_design
-from flatten_dcp import FIRST_DATA_LINE, links_all
+from src.flatten_dcp import remove_empty_tabs_and_fields
+from src.flatten_dcp import rename_vague_friendly_names
+from src.flatten_dcp import derive_exprimental_design
+from src.flatten_dcp import FIRST_DATA_LINE, links_all
 
 SAMPLE_VALUES = {
     'Donor organism': {

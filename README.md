@@ -22,30 +22,17 @@ This convertion is done in the following steps.
 Tested in python3.9. To run scripts you can run:
 ```bash
 python3 -m pip install -r requirements.txt
-python3 flatten_dcp.py -s <spreadsheet_filename> -i <input_dir> -o <output_dir>
-python3 dcp_to_tier1.py -s <flat_spreadsheet_filename> -i <input_dir> -o <output_dir>
+python3 dcp_to_tier1.py -s <flat_spreadsheet_filename>
 ```
 For example: 
 ```bash
-python3 flatten_dcp.py -s AscAdiposeProgenitor_ontologies.xlsx
-python3 dcp_to_tier1.py -s AscAdiposeProgenitor_ontologies_grouped.csv
+python3 dcp_to_tier1.py -s AscAdiposeProgenitor_ontologies.csv
 ```
 
-### flatten_dcp.py arguments
-- `--spreadsheet_filename` or `-s`: DCP metadata spreadsheet filename
+### Arguments
+- `--spreadsheet_filename` or `-s`: DCP metadata spreadsheet filename. File should exist in the `data/dcp_spreadsheet` directory
     - i.e. `AscAdiposeProgenitor_ontologies.xlsx`, `IGFBP2InhibitsAdipogenesis_ontologies.xlsx`
-- `--input_dir` or `-i`: Optional input directory that contains the provided dcp spreadsheet
-    - i.e. `dcp_spreadsheet`
-- `--output_dir` or `-o`: Optional output directory to generate the flat dcp file
-    - i.e. `denormalised_spreadsheet`
-
-### dcp_to_tier1.py arguments
-- `--flat_filename` or `-s`: DCP metadata spreadsheet filename
-    - i.e. `AscAdiposeProgenitor_ontologies_grouped.csv`, `IGFBP2InhibitsAdipogenesis_ontologies_grouped.csv`
-- `--input_dir` or `-i`: Optional input directory that contains the generated flat dcp spreadsheet
-    - i.e. `denormalised_spreadsheet`
-- `--output_dir` or `-o`: Optional output directory to generate the flat tier1 file
-    - i.e. `tier1_output`
+- `--group_field` or `-g`: DCP field to group output with. By default: `specimen_from_organism.biomaterial_core.biomaterial_id`
 
 ### TODO
-- Record process location to extract `institute` & `sample_collection_site` in [flatten_dcp.py](flatten_dcp.py)
+- Add more tests
