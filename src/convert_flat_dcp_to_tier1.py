@@ -8,6 +8,7 @@ import pandas as pd
 import numpy as np
 
 from src.dcp_to_tier1_mapping import DCP_TIER1_MAP, TIER1, HSAP_AGE_TO_DEV_DICT
+from src.flatten_dcp import explode_csv_col
 
 INPUT_DIR = 'data/denormalised_spreadsheet'
 OUTPUT_DIR = 'data/tier1_output'
@@ -97,7 +98,7 @@ def merge_sample_ids(dcp_df):
         ]
     merge_cols = [col for col in tissue_type_dcp if col in dcp_df]
     dcp_df['sample_id'] = dcp_df[merge_cols].bfill(axis=1)[merge_cols[0]]
-    return dcp_df
+    return explode_csv_col(dcp_df, column='sample_id', sep='\|\|')
 
 def get_sex_id(term):
     if term in ['mixed', 'unknown']:
@@ -304,7 +305,6 @@ def main(flat_filename:str, input_dir:str, output_dir:str):
     dcp_spreadsheet = edit_sample_source(dcp_spreadsheet)
     dcp_spreadsheet = edit_tissue_type(dcp_spreadsheet)
     dcp_spreadsheet = edit_sex(dcp_spreadsheet)
-    dcp_spreadsheet = merge_sample_ids(dcp_spreadsheet)
     dcp_spreadsheet = edit_developement_stage(dcp_spreadsheet)
     dcp_spreadsheet = edit_suspension_type(dcp_spreadsheet)
     dcp_spreadsheet = edit_alignment_software(dcp_spreadsheet)
@@ -315,6 +315,7 @@ def main(flat_filename:str, input_dir:str, output_dir:str):
     dcp_spreadsheet = edit_sampled_site_condition(dcp_spreadsheet)
     dcp_spreadsheet = edit_manner_of_death(dcp_spreadsheet)
     dcp_spreadsheet = edit_sequenced_fragment(dcp_spreadsheet)
+    dcp_spreadsheet = merge_sample_ids(dcp_spreadsheet)
 
     uns = get_uns(dcp_spreadsheet)
     obs = get_obs(dcp_spreadsheet, dcp_tier1_map=DCP_TIER1_MAP, tier1=TIER1)
