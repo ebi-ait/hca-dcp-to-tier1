@@ -3,7 +3,7 @@ Convert Human Cell Atlas DCP metadata from a provided dcp metadata [spreadsheet]
 
 ## Algorithm
 This convertion is done in the following steps.
-1. Flatten (denormalise) dcp metadata [flatten_dcp.py](flatten_dcp.py)
+1. Flatten (denormalise) dcp metadata [flatten_dcp.py](src/flatten_dcp.py)
     1. Edit friendly filenames to add consistent headers in `dcp_spreadsheet`
     1. Derive all experimental design paths (`links_filt`), starting from all available file entities (`report_entities`: `Analysis file`, `Sequence file`, `Image file`)
     1. Join worksheets for each of the `report_entity` present in spreadsheet
@@ -11,10 +11,10 @@ This convertion is done in the following steps.
     1. Add project metadata
     1. Rename headers to ingest programmatic names
     1. Export flat denormalised and grouped csv files
-1. Convert to Tier 1 spreadsheet [dcp_to_tier1.py](dcp_to_tier_1.py)
+1. Convert to Tier 1 spreadsheet [convert_flat_dcp_to_tier1.py](src/convert_flat_dcp_to_tier1.py)
     1. Open denormalised spreadsheet
     1. Edit all conditinally mapped tier 1 fields
-    1. Using the [mapping dictionary](dcp_to_tier1_mapping.py) convert all other available Tier 1 metadata
+    1. Using the [mapping dictionary](src/dcp_to_tier1_mapping.py) convert all other available Tier 1 metadata
     1. Export to `uns` and `obs` csv files 
 
 
