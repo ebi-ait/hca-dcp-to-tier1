@@ -26,6 +26,11 @@ def main(spreadsheet_filename, input_dir, flat_dir, output_dir, group_field, den
     os.makedirs(flat_dir, exist_ok=True)
     os.makedirs(output_dir, exist_ok=True)
 
+    if spreadsheet_filename.startswith('data/' + input_dir):
+        spreadsheet_filename = spreadsheet_filename.removeprefix('data' + '/' + input_dir + '/')
+    elif spreadsheet_filename.startswith(input_dir):
+        spreadsheet_filename = spreadsheet_filename.removeprefix(input_dir + "/")
+
     flatten_dcp(spreadsheet_filename, input_dir, flat_dir, group_field)
     flat_filename = spreadsheet_filename.replace('.xlsx', '_denormalised.csv' if denormalised else '_grouped.csv')
     dcp_to_tier1(flat_filename, flat_dir, output_dir)
