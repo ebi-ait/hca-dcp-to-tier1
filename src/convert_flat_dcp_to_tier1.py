@@ -137,7 +137,7 @@ def age_to_dev(age, age_unit, age_to_dev_dict):
         return None
     age = convert_to_years(age, age_unit)
     if isinstance(age, str) and '-' in age:
-        age = [int(age) for age in age.split('-')]
+        age = [float(age) for age in age.split('-')]
         for age_range, label in age_to_dev_dict.items():
             if age_range[0] <= age[0] <= age_range[1] and \
                     age_range[0] <= age[1] <= age_range[1]:
