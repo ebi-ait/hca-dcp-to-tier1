@@ -320,8 +320,8 @@ def main(flat_filename:str, input_dir:str, output_dir:str):
     uns = get_uns(dcp_spreadsheet)
     obs = get_obs(dcp_spreadsheet, dcp_tier1_map=DCP_TIER1_MAP, tier1=TIER1)
     
-    uns.to_csv(f"{output_dir}/{flat_filename.replace(r'(denormalised|grouped).csv', 'uns.csv')}")
-    obs.to_csv(f"{output_dir}/{flat_filename.replace(r'(denormalised|grouped).csv', 'obs.csv')}")
+    uns.to_csv(f"{output_dir}/{flat_filename.replace(r'(denormalised|).csv', 'uns.csv')}")
+    obs.to_csv(f"{output_dir}/{flat_filename.replace(r'(denormalised|).csv', 'obs.csv')}")
 
 if __name__ == "__main__":
     args = define_parser().parse_args()

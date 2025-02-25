@@ -32,7 +32,7 @@ def main(spreadsheet_filename, input_dir, flat_dir, output_dir, group_field, den
         spreadsheet_filename = spreadsheet_filename.removeprefix(input_dir + "/")
 
     flatten_dcp(spreadsheet_filename, input_dir, flat_dir, group_field)
-    flat_filename = spreadsheet_filename.replace('.xlsx', '_denormalised.csv' if denormalised else '_grouped.csv')
+    flat_filename = spreadsheet_filename.replace('.xlsx', '_denormalised.csv' if denormalised else '.csv')
     dcp_to_tier1(flat_filename, flat_dir, output_dir)
 
 if __name__ == "__main__":

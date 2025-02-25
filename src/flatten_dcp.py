@@ -409,7 +409,7 @@ def main(spreadsheet_filename: str, input_dir: str, output_dir: str,
         flattened.to_csv(f"{output_dir}/{spreadsheet_filename.replace('.xlsx', '_denormalised.csv')}", index=False)
         return
     flattened_grouped = flattened.groupby(group_field).agg(collapse_values).dropna(axis=1, how='all')
-    flattened_grouped.to_csv(f"{output_dir}/{spreadsheet_filename.replace('.xlsx', '_grouped.csv')}", index=True)
+    flattened_grouped.to_csv(f"{output_dir}/{spreadsheet_filename.replace('.xlsx', '.csv')}", index=True)
 
 
 if __name__ == "__main__":
