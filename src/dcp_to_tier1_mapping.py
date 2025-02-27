@@ -61,23 +61,47 @@ TIER1 = {'uns': ['title', 'study_pi', 'batch_condition', 'default_embedding', 'c
          'obs': ['sample_id', 'donor_id', 'protocol_url', 'institute', 'sample_collection_site',
                  'sample_collection_relative_time_point', 'library_id', 'library_id_repository',
                  'author_batch_notes', 'organism_ontology_term_id', 'manner_of_death',
-                 'sample_source', 'sex_ontology_term_id', 'sex_ontology_term', 
-                 'sample_collection_method', 'tissue_type', 'sampled_site_condition', 
-				 'tissue_ontology_term_id', 'tissue_ontology_term', 'tissue_free_text', 
-				 'sample_preservation_method', 'suspension_type', 'cell_enrichment', 
-				 'cell_viability_percentage', 'cell_number_loaded', 'sample_collection_year', 
-				 'assay_ontology_term_id', 'assay_ontology_term', 'library_preparation_batch',
+                 'sample_source', 'sex_ontology_term_id', 'sex_ontology_term',
+                 'sample_collection_method', 'tissue_type', 'sampled_site_condition',
+                 'tissue_ontology_term_id', 'tissue_ontology_term', 'tissue_free_text',
+                 'sample_preservation_method', 'suspension_type', 'cell_enrichment',
+                 'cell_viability_percentage', 'cell_number_loaded', 'sample_collection_year',
+                 'assay_ontology_term_id', 'assay_ontology_term', 'library_preparation_batch',
                  'library_sequencing_run', 'sequenced_fragment', 'sequencing_platform',
                  'is_primary_data', 'reference_genome', 'gene_annotation_version',
                  'alignment_software', 'intron_inclusion', 'author_cell_type',
                  'cell_type_ontology_term_id', 'disease_ontology_term_id', 'disease_ontology_term',
-                 'self_reported_ethnicity_ontology_term_id', 
+                 'self_reported_ethnicity_ontology_term_id',
                  'development_stage_ontology_term_id', 'development_stage_ontology_term'
                  # helper fields
                  # 'manner_of_death_string', 'library_id_repository_name', 'library_id_repository_description',
                  # 'sample_id_name', 'sample_id_description', 'donor_id_name', 'donor_id_description'
                  ]
          }
+
+GOLDEN_SPREADSHEET = {
+    "Tier 1 Dataset Metadata": [
+        "dataset_id", "consortia", "study_pi", "contact_email", "batch_condition", "default_embedding", 
+        "sequencing_platform", "assay_ontology_term", "assay_ontology_term_id", "reference_genome", 
+        "alignment_software", "intron_inclusion", "ambient_count_correction", "doublet_detection", 
+        "sequenced_fragment", "gene_annotation_version", "comments", "description", "publication_doi", "protocol_url"
+    ],
+    "Tier 1 Donor Metadata": [
+        "donor_id", "dataset_id", "organism_ontology_term_id", "manner_of_death", 
+        "sex_ontology_term", "sex_ontology_term_id"
+    ],
+    "Tier 1 Sample Metadata": [
+        "sample_id", "donor_id", "dataset_id", "tissue_ontology_term", "tissue_ontology_term_id",
+        "tissue_free_text", "sample_source", "sample_collection_method", "tissue_type", "sampled_site_condition",
+        "sample_preservation_method", "suspension_type", "is_primary_data", "age_range", "development_stage_ontology_term_id",
+        "cell_enrichment", "sample_collection_year", "library_id", "library_id_repository", "library_preparation_batch",
+        "library_sequencing_run", "sample_collection_site", "sample_collection_relative_time_point", "cell_number_loaded",
+        "cell_viability_percentage", "institute", "author_batch_notes"
+    ],
+    "Tier 1 Celltype Metadata": [
+        "cell_type_ontology_term_id", "cell_type_ontology_term", "author_cell_type"
+    ]}
+
 HSAP_AGE_TO_DEV_DICT = {
     # Embryonic stage = A term from the set of Carnegie stages 1-23 = (up to 8 weeks after conception; e.g. HsapDv:0000003)
     # Fetal development = A term from the set of 9 to 38 week post-fertilization human stages = (9 weeks after conception and before birth; e.g. HsapDv:0000046)

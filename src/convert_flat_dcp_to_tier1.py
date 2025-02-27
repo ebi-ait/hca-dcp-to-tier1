@@ -7,7 +7,7 @@ from dateutil.parser import date_parse
 import pandas as pd
 import numpy as np
 
-from src.dcp_to_tier1_mapping import DCP_TIER1_MAP, TIER1, HSAP_AGE_TO_DEV_DICT
+from src.dcp_to_tier1_mapping import DCP_TIER1_MAP, TIER1, HSAP_AGE_TO_DEV_DICT, GOLDEN_SPREADSHEET
 from src.flatten_dcp import explode_csv_col
 
 INPUT_DIR = 'data/denormalised_spreadsheet'
@@ -98,7 +98,7 @@ def merge_sample_ids(dcp_df):
         ]
     merge_cols = [col for col in tissue_type_dcp if col in dcp_df]
     dcp_df['sample_id'] = dcp_df[merge_cols].bfill(axis=1)[merge_cols[0]]
-    return explode_csv_col(dcp_df, column='sample_id', sep='\|\|')
+    return explode_csv_col(dcp_df, column='sample_id', sep='\|\|').reset_index(drop=True)
 
 def get_sex_id(term):
     if term in ['mixed', 'unknown']:
@@ -284,6 +284,10 @@ def edit_sequenced_fragment(dcp_df):
     dcp_df['sequenced_fragment'] = dcp_df['library_preparation_protocol.end_bias'].replace(seq_frag)
     return dcp_df
 
+def edit_consortia(dcp_df):
+    dcp_df['consortia'] = 'HCA'
+    return dcp_df
+
 def get_uns(dcp_df:pd.DataFrame)->pd.DataFrame:
     return pd.DataFrame({
         'title': dcp_df['project.project_core.project_title'].unique(), 
@@ -293,10 +297,14 @@ def get_uns(dcp_df:pd.DataFrame)->pd.DataFrame:
         'publication_doi': dcp_df['project.publications.doi'].unique() if 'project.publications.doi' in dcp_df else None
         })
 
-def get_obs(dcp_df:pd.DataFrame, dcp_tier1_map:dict, tier1:dict):
-    dcp_df = dcp_df.rename(columns=dcp_tier1_map)
-    keep_cols = [col for col in tier1['obs'] if col in dcp_df]
-    return dcp_df[keep_cols]
+def rename_cols(dcp_df:pd.DataFrame, map_dict:dict)->pd.DataFrame:
+    dcp_df = dcp_df.rename(columns=map_dict)
+    return dcp_df
+
+def select_cols(dcp_df:pd.DataFrame, cols:list)->pd.DataFrame:
+    na_cols = [col for col in cols if col not in dcp_df]
+    dcp_df[na_cols] = np.nan
+    return dcp_df[cols].drop_duplicates()
 
 def main(flat_filename:str, input_dir:str, output_dir:str):
     dcp_spreadsheet_filename = f'{input_dir}/{flat_filename}'
@@ -315,13 +323,19 @@ def main(flat_filename:str, input_dir:str, output_dir:str):
     dcp_spreadsheet = edit_sampled_site_condition(dcp_spreadsheet)
     dcp_spreadsheet = edit_manner_of_death(dcp_spreadsheet)
     dcp_spreadsheet = edit_sequenced_fragment(dcp_spreadsheet)
+    dcp_spreadsheet = edit_consortia(dcp_spreadsheet)
     dcp_spreadsheet = merge_sample_ids(dcp_spreadsheet)
 
-    uns = get_uns(dcp_spreadsheet)
-    obs = get_obs(dcp_spreadsheet, dcp_tier1_map=DCP_TIER1_MAP, tier1=TIER1)
-    
-    uns.to_csv(f"{output_dir}/{flat_filename.replace(r'(denormalised|).csv', 'uns.csv')}")
-    obs.to_csv(f"{output_dir}/{flat_filename.replace(r'(denormalised|).csv', 'obs.csv')}")
+    dcp_spreadsheet = rename_cols(dcp_spreadsheet, map_dict=DCP_TIER1_MAP)
+
+    obs = select_cols(dcp_spreadsheet, cols=TIER1['obs'])
+    obs.to_csv(f"{output_dir}/{flat_filename.replace('.csv', '_tier1.csv')}", index=False)
+
+    output_path = f"{output_dir}/{flat_filename.replace('.csv', '_tier1.xlsx')}"
+    with pd.ExcelWriter(output_path) as writer:
+        for tab, fields in GOLDEN_SPREADSHEET.items():
+            select_cols(dcp_spreadsheet, cols=fields).to_excel(writer, sheet_name=tab, index=True, header=True)
+
 
 if __name__ == "__main__":
     args = define_parser().parse_args()
