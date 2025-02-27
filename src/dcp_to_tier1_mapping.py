@@ -91,12 +91,12 @@ GOLDEN_SPREADSHEET = {
         "sex_ontology_term", "sex_ontology_term_id"
     ],
     "Tier 1 Sample Metadata": [
-        'sample_id", "donor_id", "dataset_id", "tissue_ontology_term", "tissue_ontology_term_id",
+        "sample_id", "donor_id", "dataset_id", "tissue_ontology_term", "tissue_ontology_term_id",
         "tissue_free_text", "sample_source", "sample_collection_method", "tissue_type", "sampled_site_condition",
         "sample_preservation_method", "suspension_type", "is_primary_data", "age_range", "development_stage_ontology_term_id",
         "cell_enrichment", "sample_collection_year", "library_id", "library_id_repository", "library_preparation_batch",
         "library_sequencing_run", "sample_collection_site", "sample_collection_relative_time_point", "cell_number_loaded",
-        "cell_viability_percentage", "institute", "author_batch_notes'
+        "cell_viability_percentage", "institute", "author_batch_notes"
     ],
     "Tier 1 Celltype Metadata": [
         "cell_type_ontology_term_id", "cell_type_ontology_term", "author_cell_type"
