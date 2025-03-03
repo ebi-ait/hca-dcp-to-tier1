@@ -14,7 +14,7 @@ def define_parser():
     parser = argparse.ArgumentParser(description='Run bionetwork script')
     parser.add_argument('--bionetwork', '-b', action='store', dest='bionetwork', type=str, 
                         required=True, help='Name of the bionetwork to process')
-    parser.add_argument('--csv', '-c', action='store', dest='csv', type=str, 
+    parser.add_argument('--csv', '-c', action='store', dest='csv', type=str,
                         required=False, default='data/bionetworks.csv', help='Path to bionetwork CSV file')
     parser.add_argument('--group_field', '-g', action='store', dest='group_field', type=str,
                         required=False, default=GROUP_FIELD, help='DCP field to group output with')
