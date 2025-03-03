@@ -262,7 +262,7 @@ def edit_sampled_site_condition(dcp_df):
     return dcp_df
 
 def manner_of_death_helper(row):
-    if 'donor_organism.death.hardy_scale' in row and not np.isnan(row['donor_organism.death.hardy_scale']):
+    if 'donor_organism.death.hardy_scale' in row and not np.isnan(float(row['donor_organism.death.hardy_scale'])):
         return row['donor_organism.death.hardy_scale']
     if row['donor_organism.is_living'] == 'yes':
         return 'not applicable'
