@@ -142,15 +142,14 @@ def age_to_dev(age, age_unit, age_to_dev_dict):
             if age_range[0] <= age[0] <= age_range[1] and \
                     age_range[0] <= age[1] <= age_range[1]:
                 return label
-            if age_range[0] <= np.mean(age) <= age_range[1]:
-                print(f"Given range {age} overlaps the acceptable ranges. Will use 'unknown'")
-                return 'unknown'
+            print(f"Given range {age} overlaps the acceptable ranges. Will use 'developmental stage' instead.")
+            return None
     if isinstance(age, (int, float, str)) and (age.isdigit() or age.replace('.', '', 1).isdigit()):
         age = float(age) if isinstance(age, str) else age
         for age_range, label in age_to_dev_dict.items():
             if age_range[0] <= age <= age_range[1]:
                 return label
-    print(f"Age {age} could not be mapped to accepted ranges {['-'.join(map(str, age)) for age in age_to_dev_dict.keys()]}")
+    # print(f"Age {age} could not be mapped to accepted ranges {['-'.join(map(str, age)) for age in age_to_dev_dict.keys()]}")
     return None
 
 def dev_stage_helper(row):
