@@ -7,7 +7,7 @@ from dateutil.parser import date_parse
 import pandas as pd
 import numpy as np
 
-from src.dcp_to_tier1_mapping import DCP_TIER1_MAP, TIER1, HSAP_AGE_TO_DEV_DICT, GOLDEN_SPREADSHEET
+from src.dcp_to_tier1_mapping import DCP_TIER1_MAP, TIER1, HSAP_AGE_TO_DEV_DICT, GOLDEN_SPREADSHEET, COLLECTION_DICT
 from src.flatten_dcp import explode_csv_col
 
 INPUT_DIR = 'data/denormalised_spreadsheet'
@@ -220,6 +220,11 @@ def edit_collection_year(dcp_df):
         dcp_df['collection_year'] = dcp_df['specimen_from_organism.collection_time'].apply(parse_year)
     return dcp_df
 
+def edit_collection_method(dcp_df):
+    if 'collection_protocol.method.ontology_label' in dcp_df:
+        dcp_df['sample_collection_method'] = dcp_df['collection_protocol.method.ontology_label'].replace(COLLECTION_DICT)
+    return dcp_df
+
 def tissue_free_text_helper(row):
     if 'specimen_from_organism.organ_parts.text' in row:
         return row['specimen_from_organism.organ_parts.text']
@@ -320,6 +325,7 @@ def main(flat_filename:str, input_dir:str, output_dir:str):
     dcp_spreadsheet = edit_alignment_software(dcp_spreadsheet)
     dcp_spreadsheet = edit_reference_genome(dcp_spreadsheet)
     dcp_spreadsheet = edit_collection_year(dcp_spreadsheet)
+    dcp_spreadsheet = edit_collection_method(dcp_spreadsheet)
     dcp_spreadsheet = edit_tissue_free_text(dcp_spreadsheet)
     dcp_spreadsheet = edit_diseases(dcp_spreadsheet)
     dcp_spreadsheet = edit_sampled_site_condition(dcp_spreadsheet)
