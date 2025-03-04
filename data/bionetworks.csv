@@ -1,36 +1,36 @@
-bionetwork,spreadsheet
-adipose,HumanMouseWhiteAdipose.xlsx
-adipose,AdipocytesThermogenesisWolfrum.xlsx
-adipose,AscAdiposeProgenitor_ontologies.xlsx
-adipose,SpatialWATMassier2023.xlsx
-lung,LungMapVisium_ontologies.xlsx
-oral and craniofacial,MuralGingivaZhu_metadata_31-10-2024.xlsx
-immune,pbmcCov19Flu_metadata_25-10-2023.xlsx
-immune,SARSCov2ChildrenAdults_metadata_07-11-2023.xlsx
-immune,SchulteSchrepping2020_metadata_16-03-2023.xlsx
-immune,COMBAT2022_metadata_24-01-2025.xlsx
-immune,COVID19autoimmunityPBMCs_metadata_16-03-2023.xlsx
-immune,Covid19PBMC_metadata_29-08-2023.xlsx
-immune,covid19PBMCsTCRandCITEseq_metadata_21-04-2023.xlsx
-immune,eQTLAutoimmune_pool_fix.xlsx
-immune,humanBloodCiteSeq2_metadata_04-04-2023.xlsx
-immune,IFNAutoantibodiesVanDerWijst_ontologies.xlsx
-test,IGFBP2InhibitsAdipogenesis.xlsx
-test,MuralGingivaZhu_ontologies.xlsx
-test,ArutyunyanHumanPlacenta_metadata_11-01-2024.xlsx
-test,ArutyunyanHumanPlacenta_ontologies.xlsx
-test,AscAdiposeProgenitor.xlsx
-kidney,ImmuneLandscapeccRCC_metadata_30-01-2023.xlsx
-kidney,PathogenInducedResidentMemory_metadata_21-04-2023.xlsx
-kidney,RenalTumorMicroenvironment_metadata_06-04-2023.xlsx
-kidney,KidneySexBasedTranscriptome_metadata_21-04-2023.xlsx
-kidney,CellularComplexityADPKD_metadata_28-10-2024.xlsx
-kidney,Califano-Human-10x3pv2_metadata_30-01-2023.xlsx
-kidney,SuryawanshiKidneyAllografts_metadata_17-02-2023.xlsx
-kidney,ChimerismKidneyTransplantReject_metadata_23-10-2023.xlsx
-kidney,Menon-Human-FSG-10x3_metadata_17-05-2023.xlsx
-kidney,Diabetic Nephropathy snRNA-seq_metadata_01-09-2023.xlsx
-kidney,GSE118184KidneyOrganoid_metadata_30-08-2022.xlsx
-kidney,HumanAdultKidneyLiaoMo_metadata_21-12-2023.xlsx
-kidney,Kidney_biopsy_scRNA-seq.xlsx
-kidney,KidneySingleCellAtlas.xlsx
+bionetwork,spreadsheet,source_study
+adipose,HumanMouseWhiteAdipose.xlsx,Emont (2022) Nature
+adipose,AdipocytesThermogenesisWolfrum.xlsx,Sun (2020) Nature
+adipose,AscAdiposeProgenitor_ontologies.xlsx,Strieder-Barboza (2022) bioRxiv
+adipose,SpatialWATMassier2023.xlsx,Massier (2023) Nature Communications
+lung,LungMapVisium_ontologies.xlsx,Kadur Lakshminarasimha Murthy (2022) Nature
+oral and craniofacial,MuralGingivaZhu_metadata_31-10-2024.xlsx,Zhu (2023) Archives of Oral Biology
+immune,pbmcCov19Flu_metadata_25-10-2023.xlsx,Lee (2020) Science Immunology
+immune,SARSCov2ChildrenAdults_metadata_07-11-2023.xlsx,Yoshida (2021) Nature
+immune,SchulteSchrepping2020_metadata_16-03-2023.xlsx,Jin (2021) iScience_part
+immune,COMBAT2022_metadata_24-01-2025.xlsx,Ahern (2022) Cell
+immune,COVID19autoimmunityPBMCs_metadata_16-03-2023.xlsx,Chan Zuckerberg Initiative Single-Cell COVID-19 Consortia (2020) medRxiv
+immune,Covid19PBMC_metadata_29-08-2023.xlsx,Stephenson (2021) Nature Medicine
+immune,covid19PBMCsTCRandCITEseq_metadata_21-04-2023.xlsx,Liu (2021) Cell
+immune,eQTLAutoimmune_pool_fix.xlsx,Yazar (2022) Science
+immune,humanBloodCiteSeq2_metadata_04-04-2023.xlsx,Hao (2021) Cell
+immune,IFNAutoantibodiesVanDerWijst_ontologies.xlsx,van der Wijst (2021) Science Translational Medicine
+test,IGFBP2InhibitsAdipogenesis.xlsx,Ferrero (2023) bioRxiv
+test,MuralGingivaZhu_ontologies.xlsx,Zhu (2023) Archives of Oral Biology_test
+test,ArutyunyanHumanPlacenta_metadata_11-01-2024.xlsx,Arutyunyan (2023) Nature Communications
+test,ArutyunyanHumanPlacenta_ontologies.xlsx,Arutyunyan (2023) Nature Communications_test
+test,AscAdiposeProgenitor.xlsx,Strieder-Barboza (2022) bioRxiv
+kidney,ImmuneLandscapeccRCC_metadata_30-01-2023.xlsx,Krishna (2021) Cancer Cell
+kidney,PathogenInducedResidentMemory_metadata_21-04-2023.xlsx,Krebs (2020) Science Immunology
+kidney,RenalTumorMicroenvironment_metadata_06-04-2023.xlsx,Zhang (2021) Proceedings of the National Academy of Sciences
+kidney,KidneySexBasedTranscriptome_metadata_21-04-2023.xlsx,McEvoy (2022) Nature Communications
+kidney,CellularComplexityADPKD_metadata_28-10-2024.xlsx,Muto (2022) Nature Communications
+kidney,Califano-Human-10x3pv2_metadata_30-01-2023.xlsx,Stewart (2019) Science
+kidney,SuryawanshiKidneyAllografts_metadata_17-02-2023.xlsx,Obradovic (2021) Cell
+kidney,ChimerismKidneyTransplantReject_metadata_23-10-2023.xlsx,Suryawanshi (2022) PLOS ONE
+kidney,Menon-Human-FSG-10x3_metadata_17-05-2023.xlsx,Malone (2020) Journal of the American Society of Nephrology
+kidney,Diabetic Nephropathy snRNA-seq_metadata_01-09-2023.xlsx,Menon (2020) JCI Insight
+kidney,GSE118184KidneyOrganoid_metadata_30-08-2022.xlsx,Wilson (2019) Proceedings of the National Academy of Sciences
+kidney,HumanAdultKidneyLiaoMo_metadata_21-12-2023.xlsx,Wu (2018) Cell Stem Cell
+kidney,Kidney_biopsy_scRNA-seq.xlsx,Liao (2020) Scientific Data
+kidney,KidneySingleCellAtlas.xlsx,Wu (2018) Journal of the American Society of Nephrology

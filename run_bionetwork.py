@@ -1,4 +1,5 @@
 import os
+from os.path import basename, splitext
 import argparse
 import zipfile
 
@@ -25,10 +26,11 @@ def define_parser():
                         required=False, default='both', help='Output format (csv, xlsx, both)')
     return parser
 
-def make_zipfile(input_filenames:list, output_filename:str):
+def make_zipfile(input_filenames:list, output_filename:str, filename_mapping:dict=None):
     with zipfile.ZipFile(output_filename, "w") as zip_file:
         for filename in input_filenames:
-            zip_file.write(filename, arcname=os.path.basename(filename))
+            arcname = filename_mapping.get(filename, os.path.basename(filename)) if filename_mapping else os.path.basename(filename)
+            zip_file.write(filename, arcname=arcname)
     print(f"Zip file created at {output_filename}")
 
 def select_zip_files(xlsx_files, denormalised, output_format):
@@ -40,7 +42,12 @@ def select_zip_files(xlsx_files, denormalised, output_format):
             output_file = f"{OUTPUT_DIR}/{xlsx_file.replace('.xlsx', extension)}"
             if os.path.exists(output_file):
                 selected_files.append(output_file)
+            else:
+                print(f"File {output_file} not found!")
     return selected_files
+
+def orig_filename(output_filename):
+    return basename(output_filename.replace('_denormalised', '').replace('_tier1', '').replace('.csv', '.xlsx'))
 
 def main(csv, bionetwork, group_field, denormalised, output_format):
     df = pd.read_csv(csv)
@@ -53,11 +60,15 @@ def main(csv, bionetwork, group_field, denormalised, output_format):
         dcp_to_tier1(xlsx_file, INPUT_DIR, FLAT_DIR, OUTPUT_DIR, group_field, denormalised)
     
     selected_files = select_zip_files(xlsx_files, denormalised, output_format)
+    
+    study_dict = df[['spreadsheet','source_study']].set_index('spreadsheet').to_dict()['source_study']
+    files_mapping = {file: f"{study_dict.get(orig_filename(file), '')}{splitext(file)[1]}" for file in selected_files}
+    
     denorm_fnm = "_denormalised" if denormalised else ""
     format_fnm = f"_{output_format}" if output_format != 'both' else ""
 
     output_filename = f"{OUTPUT_DIR}/{bionetwork}{denorm_fnm}{format_fnm}_tier1.zip"
-    make_zipfile(selected_files, output_filename)
+    make_zipfile(selected_files, output_filename, files_mapping)
 
 if __name__ == '__main__':
     args = define_parser().parse_args()
