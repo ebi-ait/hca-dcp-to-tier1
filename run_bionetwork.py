@@ -21,6 +21,8 @@ def define_parser():
                         required=False, default=GROUP_FIELD, help='DCP field to group output with')
     parser.add_argument('--denormalised', '-d', action='store_true', dest='denormalised',
                         required=False, default=DENORMALISED, help='use the denormalised flat file instead of the grouped one')
+    parser.add_argument('--format', '-f', action='store', dest='output_format', type=str,
+                        required=False, default='both', help='Output format (csv, xlsx, both)')
     return parser
 
 def make_zipfile(input_filenames:list, output_filename:str):
@@ -29,17 +31,18 @@ def make_zipfile(input_filenames:list, output_filename:str):
             zip_file.write(filename, arcname=os.path.basename(filename))
     print(f"Zip file created at {output_filename}")
 
-def select_zip_files(xlsx_files, denormalised):
-    tier1_files = []
-    extensions = [f'_denormalised_tier1.{format}' if denormalised else f'_tier1.{format}' for format in ['csv', 'xlsx']]
+def select_zip_files(xlsx_files, denormalised, output_format):
+    selected_files = []
+    formats = ['csv', 'xlsx'] if output_format == "both" else [output_format]
+    extensions = [f'_denormalised_tier1.{format}' if denormalised else f'_tier1.{format}' for format in formats]
     for extension in extensions:
         for xlsx_file in xlsx_files:
             output_file = f"{OUTPUT_DIR}/{xlsx_file.replace('.xlsx', extension)}"
             if os.path.exists(output_file):
-                tier1_files.append(output_file)
-    return tier1_files
+                selected_files.append(output_file)
+    return selected_files
 
-def main(csv, bionetwork, group_field, denormalised):
+def main(csv, bionetwork, group_field, denormalised, output_format):
     df = pd.read_csv(csv)
     xlsx_files = df.loc[df['bionetwork'] == bionetwork.lower(), 'spreadsheet'].tolist()
     for xlsx_file in xlsx_files:
@@ -49,11 +52,13 @@ def main(csv, bionetwork, group_field, denormalised):
         print(f"=====Processing {xlsx_file}=====")
         dcp_to_tier1(xlsx_file, INPUT_DIR, FLAT_DIR, OUTPUT_DIR, group_field, denormalised)
     
-    tier1_files = select_zip_files(xlsx_files, denormalised)
-    output_filename = f"{OUTPUT_DIR}/{bionetwork}_denormalised_tier1.zip" if denormalised \
-                 else f"{OUTPUT_DIR}/{bionetwork}_tier1.zip"
-    make_zipfile(tier1_files, output_filename)
+    selected_files = select_zip_files(xlsx_files, denormalised, output_format)
+    denorm_fnm = "_denormalised" if denormalised else ""
+    format_fnm = f"_{output_format}" if output_format != 'both' else ""
+
+    output_filename = f"{OUTPUT_DIR}/{bionetwork}{denorm_fnm}{format_fnm}_tier1.zip"
+    make_zipfile(selected_files, output_filename)
 
 if __name__ == '__main__':
     args = define_parser().parse_args()
-    main(args.csv, args.bionetwork, args.group_field, args.denormalised)
+    main(args.csv, args.bionetwork, args.group_field, args.denormalised, args.output_format)
