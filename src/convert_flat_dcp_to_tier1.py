@@ -141,14 +141,14 @@ def age_to_dev(age, age_unit, age_to_dev_dict):
         for age_range, label in age_to_dev_dict.items():
             if age_range[0] <= age[0] <= age_range[1] and \
                     age_range[0] <= age[1] <= age_range[1]:
-                return label
+                return age_range
             print(f"Given range {age} overlaps the acceptable ranges. Will use 'developmental stage' instead.")
             return None
     if isinstance(age, (int, float, str)) and (age.isdigit() or age.replace('.', '', 1).isdigit()):
         age = float(age) if isinstance(age, str) else age
         for age_range, label in age_to_dev_dict.items():
             if age_range[0] <= age <= age_range[1]:
-                return label
+                return age_range
     # print(f"Age {age} could not be mapped to accepted ranges {['-'.join(map(str, age)) for age in age_to_dev_dict.keys()]}")
     return None
 
@@ -159,10 +159,13 @@ def dev_stage_helper(row):
                                age_to_dev_dict=HSAP_AGE_TO_DEV_DICT)
         if dev_stage:
             return dev_stage
-    return row['donor_organism.development_stage.ontology']
+    return None
 
 def edit_developement_stage(dcp_df):
-    dcp_df['development_stage_ontology_term_id'] = dcp_df.apply(dev_stage_helper, axis=1)
+    dev_age_stage = dcp_df.apply(dev_stage_helper, axis=1)
+    dcp_df['age_range'] = dev_age_stage.apply(lambda x: '-'.join(map(str, x)) if x else np.nan)
+    dcp_df['development_stage_ontology_term_id'] = dev_age_stage.apply(lambda x: HSAP_AGE_TO_DEV_DICT[x] if x in HSAP_AGE_TO_DEV_DICT else None)
+    dcp_df.fillna({'development_stage_ontology_term_id': dcp_df['donor_organism.development_stage.ontology']}, inplace=True)
     dev_dict = {dev: get_ols_label(dev) for dev in dcp_df['development_stage_ontology_term_id'].unique() if dev != 'unknown'}
     dcp_df['development_stage_ontology_term'] = dcp_df['development_stage_ontology_term_id'].replace(dev_dict)
     return dcp_df
