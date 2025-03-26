@@ -23,6 +23,8 @@ def define_parser():
 
 def get_ols_id(term, ontology):
     request_query = 'https://www.ebi.ac.uk/ols4/api/search?q='
+    if term is np.nan:
+        return term
     response = requests.get(request_query + f"{term.replace(' ', '+')}&ontology={ontology}", timeout=10).json()
     if response["response"]["numFound"] == 0:
         print(f"No ontology found for {term} in {ontology}")
@@ -30,9 +32,7 @@ def get_ols_id(term, ontology):
     return response["response"]["docs"][0]['obo_id']
 
 def get_ols_label(ontology_id, only_label=True, ontology=None):
-    if not re.match(r"\w+:\d+", ontology_id):
-        return ontology_id
-    if ontology_id is np.nan:
+    if ontology_id is np.nan or not re.match(r"\w+:\d+", ontology_id):
         return ontology_id
     ontology_name = ontology if ontology else ontology_id.split(":")[0].lower()
     ontology_term = ontology_id.replace(":", "_")
