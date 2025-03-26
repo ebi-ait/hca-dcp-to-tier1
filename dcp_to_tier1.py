@@ -30,8 +30,9 @@ def main(spreadsheet_filename, input_dir, flat_dir, output_dir, group_field, den
         spreadsheet_filename = spreadsheet_filename.removeprefix('data' + '/' + input_dir + '/')
     elif spreadsheet_filename.startswith(input_dir):
         spreadsheet_filename = spreadsheet_filename.removeprefix(input_dir + "/")
-    if group_field == "":
+    if group_field == "" or denormalised:
         denormalised = True
+        group_field = ""
 
     flatten_dcp(spreadsheet_filename, input_dir, flat_dir, group_field)
     flat_filename = spreadsheet_filename.replace('.xlsx', '_denormalised.csv' if denormalised else '.csv')
