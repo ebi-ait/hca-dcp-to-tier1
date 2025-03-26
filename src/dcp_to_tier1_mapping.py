@@ -178,6 +178,70 @@ GOLDEN_SPREADSHEET = {
     ],
 }
 
+IMMUNE_SPREADSHEET = {
+    "dataset": [
+        "dataset_id",
+        "consortia",
+        "study_pi",
+        "contact_email",
+        "batch_condition",
+        "default_embedding",
+        "comments",
+        "description",
+        "publication_doi",
+        "protocol_url",
+    ],
+    "donor": [
+        "donor_id",
+        "dataset_id",
+        "organism_ontology_term_id",
+        "manner_of_death",
+        "sex_ontology_term",
+        "sex_ontology_term_id",
+    ],
+    "sample": [
+        "sample_id",
+        "donor_id",
+        "tissue_ontology_term",
+        "tissue_ontology_term_id",
+        "tissue_free_text",
+        "sample_source",
+        "sample_collection_method",
+        "tissue_type",
+        "sampled_site_condition",
+        "sample_preservation_method",
+        "suspension_type",
+        "is_primary_data",
+        "age_range",
+        "development_stage_ontology_term_id",
+        "cell_enrichment",
+        "sample_collection_year",
+        "sample_collection_site",
+        "sample_collection_relative_time_point",
+        "institute",
+        "author_batch_notes"
+    ],
+    "library": [
+        "library_id",
+        "sample_id",
+        "library_id_repository",
+        "library_preparation_batch",
+        "library_sequencing_run",
+        "cell_viability_percentage",
+        "cell_number_loaded",
+        "sequencing_platform",
+        "assay_ontology_term",
+        "assay_ontology_term_id",
+        "reference_genome",
+        "alignment_software",
+        "intron_inclusion",
+        "ambient_count_correction",
+        "doublet_detection",
+        "sequenced_fragment",
+        "gene_annotation_version"
+    ],
+}
+
 HSAP_AGE_TO_DEV_DICT = {
     # Embryonic stage = A term from the set of Carnegie stages 1-23 = (up to 8 weeks after conception; e.g. HsapDv:0000003)
     # Fetal development = A term from the set of 9 to 38 week post-fertilization human stages = (9 weeks after conception and before birth; e.g. HsapDv:0000046)
