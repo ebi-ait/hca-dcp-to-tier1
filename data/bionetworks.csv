@@ -41,19 +41,19 @@ skin,SkinFibroblastAutoimmuneXu10x_metadata_21-03-2024.xlsx,Xu (2021) Nature
 skin,InfiltratingTCellsLupus_metadata_06-11-2023.xlsx,Dunlap (2022) JCI Insight
 skin,HumanMelanocyteDevelopment_metadata_04-04-2023.xlsx,Belote (2021) Nature Cell Biology
 skin,HumanNeonatalForeskin_metadata_01-10-2022.xlsx,Wang (2020) Nature Communications
-skin,,Tabib (2021) Nature Communications
-skin,,Wiedemann (2023) Cell Reports
 skin,SkinAtopicDermatitis10x_metadata_02-11-2023.xlsx,Rojahn (2020) Journal of Allergy and Clinical Immunology
 skin,LymphoidInfidelityDermatitis_metadata_01-11-2023.xlsx,Alkon (2022) Journal of Allergy and Clinical Immunology
 skin,AgingSkinAtlas_metadata_01-10-2022.xlsx,Zou (2021) Developmental Cell
 skin,TranscriptionalFeaturesHairFollicles_metadata_30-09-2022.xlsx,Takahashi (2020) Journal of Investigative Dermatology
-skin,,He (2021) Journal of Allergy and Clinical Immunology
 skin,MultimodalSquamousCarcinoma.xlsx,Ji (2020) Cell
 skin,skin-serine-proteases_metadata_07-11-2023.xlsx,Vorstandlechner (2021) Nature Communications
 skin,SkinLymphomaRindler10x_metadata_29-11-2023.xlsx,Rindler (2021) Molecular Cancer
-skin,,Hughes (2020) Immunity
 skin,scAgingHumanMaleSkin_metadata_03-08-2023.xlsx,Solé-Boldo (2020) Communications Biology
 skin,TCellLymphomaHeterogeneity_metadata_13-12-2022.xlsx,Gaydosik (2019) Clinical Cancer Research
-skin,,Cheng (2018) Cell Reports
 skin,EarlyInflammationSkin_metadata_07-11-2023.xlsx,Boothby (2021) Nature
-skin,,Liu (2024) Cell Stem Cell
+sskin,,Tabib (2021) Nature Communications
+sskin,,Wiedemann (2023) Cell Reports
+sskin,,He (2021) Journal of Allergy and Clinical Immunology
+sskin,,Hughes (2020) Immunity
+sskin,,Cheng (2018) Cell Reports
+sskin,,Liu (2024) Cell Stem Cell
