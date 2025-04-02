@@ -225,9 +225,28 @@ def edit_collection_method(dcp_df):
         dcp_df['sample_collection_method'] = dcp_df['collection_protocol.method.ontology_label'].replace(COLLECTION_DICT)
     return dcp_df
 
+def tissue_helper(row, ontology=False):
+    field = 'ontology' if ontology else 'ontology_label'
+    if f'specimen_from_organism.organ_parts.{field}' in row:
+        return row[f'specimen_from_organism.organ_parts.{field}']
+    if f'specimen_from_organism.organ.{field}' in row:
+        return row[f'specimen_from_organism.organ.{field}']
+    return None
+
+def edit_tissue(dcp_df):
+    dcp_df['tissue_ontology_term'] = dcp_df.apply(tissue_helper, axis=1)
+    dcp_df['tissue_ontology_term_id'] = dcp_df.apply(tissue_helper, axis=1, ontology=True)
+    return dcp_df
+
 def tissue_free_text_helper(row):
-    if 'specimen_from_organism.organ_parts.text' in row:
-        return row['specimen_from_organism.organ_parts.text']
+    organ_parts = 'specimen_from_organism.organ_parts'
+    organ = 'specimen_from_organism.organ'
+    if f'{organ_parts}.text' in row and \
+        row[f'{organ_parts}.text'] is not np.nan and \
+        row[f'{organ_parts}.text'].lower() != row[f'{organ_parts}.ontology_label'].lower():
+        return row[f'{organ_parts}.text']
+    if f'{organ}.text' in row and row[f'{organ}.text'].lower() != row[f'{organ}.ontology_label'].lower():
+        return row[f'{organ}.text']
     return None
 
 def edit_tissue_free_text(dcp_df):
@@ -326,6 +345,7 @@ def main(flat_filename:str, input_dir:str, output_dir:str):
     dcp_spreadsheet = edit_reference_genome(dcp_spreadsheet)
     dcp_spreadsheet = edit_collection_year(dcp_spreadsheet)
     dcp_spreadsheet = edit_collection_method(dcp_spreadsheet)
+    dcp_spreadsheet = edit_tissue(dcp_spreadsheet)
     dcp_spreadsheet = edit_tissue_free_text(dcp_spreadsheet)
     dcp_spreadsheet = edit_diseases(dcp_spreadsheet)
     dcp_spreadsheet = edit_sampled_site_condition(dcp_spreadsheet)
