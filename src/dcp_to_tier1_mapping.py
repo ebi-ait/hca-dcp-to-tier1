@@ -170,6 +170,7 @@ GOLDEN_SPREADSHEET = {
         "cell_viability_percentage",
         "institute",
         "author_batch_notes",
+        "disease_ontology_term_id",
     ],
     "Tier 1 Celltype Metadata": [
         "cell_type_ontology_term_id",
