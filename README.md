@@ -26,7 +26,7 @@ python3 dcp_to_tier1.py -s <flat_spreadsheet_filename>
 ```
 For example: 
 ```bash
-python3 dcp_to_tier1.py -s AscAdiposeProgenitor_ontologies.csv
+python3 dcp_to_tier1.py -s AscAdiposeProgenitor_ontologies.xlsx
 ```
 
 ### Arguments
