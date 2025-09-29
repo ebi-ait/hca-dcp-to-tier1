@@ -2,7 +2,7 @@
 Convert Human Cell Atlas DCP metadata from a provided dcp metadata [spreadsheet](https://github.com/ebi-ait/geo_to_hca/tree/master/template),into [HCA Tier 1 schema](https://docs.google.com/spreadsheets/d/13oqRLh1awe7bClpX617_HQaoS8XPZV5JKPtPEff8-p4/edit?gid=1404414727#gid=1404414727) spreadsheet. The vice versa conversion is done with https://github.com/ebi-ait/hca-tier1-to-dcp
 
 ## Algorithm
-This convertion is done in the following steps.
+This convertion is done by running the [dcp_to_tier1.py](dcp_to_tier1.py) script. Under the hood these steps are followed.
 1. Flatten (denormalise) dcp metadata [flatten_dcp.py](src/flatten_dcp.py)
     1. Edit friendly filenames to add consistent headers in `dcp_spreadsheet`
     1. Derive all experimental design paths (`links_filt`), starting from all available file entities (`report_entities`: `Analysis file`, `Sequence file`, `Image file`)
@@ -22,7 +22,7 @@ This convertion is done in the following steps.
 Tested in python3.9. To run scripts you can run:
 ```bash
 python3 -m pip install -r requirements.txt
-python3 dcp_to_tier1.py -s <flat_spreadsheet_filename>
+python3 dcp_to_tier1.py -s <flat_spreadsheet_path>
 ```
 For example: 
 ```bash
@@ -30,9 +30,9 @@ python3 dcp_to_tier1.py -s AscAdiposeProgenitor_ontologies.xlsx
 ```
 
 ### Arguments
-- `--spreadsheet_filename` or `-s`: DCP metadata spreadsheet filename. File should exist in the `data/dcp_spreadsheet` directory
-    - i.e. `AscAdiposeProgenitor_ontologies.xlsx`, `IGFBP2InhibitsAdipogenesis_ontologies.xlsx`
+- `--spreadsheet_path` or `-s`: DCP metadata spreadsheet path. File will be copied to be edited in the `data/dcp_spreadsheet` directory
 - `--group_field` or `-g`: DCP field to group output with. By default: `specimen_from_organism.biomaterial_core.biomaterial_id`
+- `--output_dir` or `-o`: Output dir for each script
 
 ### TODO
 - Add more tests

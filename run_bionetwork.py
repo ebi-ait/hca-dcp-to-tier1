@@ -57,7 +57,7 @@ def main(csv, bionetwork, group_field, denormalised, output_format):
             print(f"File {xlsx_file} not found in {INPUT_DIR}")
             continue
         print(f"=====Processing {xlsx_file}=====")
-        dcp_to_tier1(xlsx_file, INPUT_DIR, FLAT_DIR, OUTPUT_DIR, group_field, denormalised)
+        dcp_to_tier1(os.path.join(INPUT_DIR, xlsx_file), FLAT_DIR, OUTPUT_DIR, group_field, denormalised)
     
     selected_files = select_zip_files(xlsx_files, denormalised, output_format)
     
