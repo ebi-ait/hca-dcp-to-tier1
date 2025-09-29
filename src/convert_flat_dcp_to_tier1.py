@@ -3,7 +3,7 @@ import os
 import re
 
 import requests
-from dateutil.parser import date_parse
+from dateutil.parser import parse
 
 import pandas as pd
 import numpy as np
@@ -213,9 +213,9 @@ def edit_reference_genome(dcp_df):
 def parse_year(date_value):
     try:
         if isinstance(date_value, str):
-            return date_parse(date_value, fuzzy=True).year
+            return parse(date_value, fuzzy=True).year
         if isinstance(date_value, (int, float)):
-            return date_parse(str(int(date_value)), fuzzy=True).year
+            return parse(str(int(date_value)), fuzzy=True).year
     except (ValueError, TypeError):
         return pd.NA
     return pd.NA
