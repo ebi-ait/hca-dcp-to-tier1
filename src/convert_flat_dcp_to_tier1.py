@@ -368,6 +368,7 @@ def main(flat_path:str, output_dir:str):
     with pd.ExcelWriter(output_path) as writer:
         for tab, fields in GOLDEN_SPREADSHEET.items():
             select_cols(dcp_spreadsheet, cols=fields).to_excel(writer, sheet_name=tab, index=True, header=True)
+    print(f"Tier 1 spreadsheet created at {output_path}")
 
 
 if __name__ == "__main__":

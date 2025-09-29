@@ -406,13 +406,16 @@ def main(spreadsheet_path: str, output_dir: str = OUTPUT_DIR,
     
     if group_field == '':
         flattened.to_csv(f"{output_dir}/{filename.replace('.xlsx', '_denormalised.csv')}", index=False)
+        print(f'Denormalised spreadsheet created at {output_dir}/{filename.replace(".xlsx", "_denormalised.csv")}') 
         return
     if group_field not in flattened:
         print(f'Group field provided not in spreadsheet: {group_field}\nProviding denormalised spreadsheet')
         flattened.to_csv(f"{output_dir}/{filename.replace('.xlsx', '_denormalised.csv')}", index=False)
+        print(f'Denormalised spreadsheet created at {output_dir}/{filename.replace(".xlsx", "_denormalised.csv")}')
         return
     flattened_grouped = flattened.groupby(group_field).agg(collapse_values).dropna(axis=1, how='all')
     flattened_grouped.to_csv(f"{output_dir}/{filename.replace('.xlsx', '.csv')}", index=True)
+    print(f'Grouped spreadsheet created at {output_dir}/{filename.replace(".xlsx", ".csv")}')
 
 
 if __name__ == "__main__":
