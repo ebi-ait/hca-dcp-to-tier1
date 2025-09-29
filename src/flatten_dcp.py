@@ -3,6 +3,7 @@
 
 import argparse
 
+import os
 from functools import partial, reduce
 from dataclasses import dataclass
 
@@ -18,10 +19,12 @@ OUTPUT_DIR = 'data/denormalised_spreadsheet'
 def define_parser():
     """Defines and returns the argument parser."""
     parser = argparse.ArgumentParser(description="Parser for the arguments")
-    parser.add_argument("-s", "--spreadsheet_filename", action="store",
-                        dest="spreadsheet_filename", type=str, required=True, help="dcp spreadsheet filename")
+    parser.add_argument("-s", "--spreadsheet_path", action="store",
+                        dest="spreadsheet_path", type=str, required=True, help="dcp spreadsheet path")
     parser.add_argument("-g", "--group_field", action="store", default='specimen_from_organism.biomaterial_core.biomaterial_id',
-                        dest="group_field", type=str, required=False, help="field to group output with, use empty to have denormalised")
+                        dest="group_field", type=str, required=False, help="field to group output with, use empty to denormalise")
+    parser.add_argument("-o", "--output_dir", action="store", default='data/denormalised_spreadsheet',
+                        dest="output_dir", type=str, required=False, help="directory to output denormalised spreadsheet")
     return parser
 
 
@@ -346,14 +349,14 @@ def collapse_values(series):
     return "||".join(series.dropna().unique().astype(str))
 
 
-def main(spreadsheet_filename: str, input_dir: str, output_dir: str, 
+def main(spreadsheet_path: str, output_dir: str = OUTPUT_DIR, 
          group_field: str = 'specimen_from_organism.biomaterial_core.biomaterial_id'):
-    spreadsheet = f'{input_dir}/{spreadsheet_filename}'
+    filename = os.path.basename(spreadsheet_path)
     # open excel with write only to remove empty tabs & fields & unnamed columns
-    spreadsheet_obj = pd.ExcelFile(spreadsheet, engine_kwargs={'read_only': False})
+    spreadsheet_obj = pd.ExcelFile(spreadsheet_path, engine_kwargs={'read_only': False})
     spreadsheet_obj = remove_empty_tabs_and_fields(spreadsheet_obj)
     spreadsheet_obj = rename_vague_friendly_names(spreadsheet_obj)
-    spreadsheet_obj.book.save(spreadsheet)
+    spreadsheet_obj.book.save(os.path.join(INPUT_DIR, filename.replace('.xlsx', '.tmp.xlsx')))
     report_entities = [entity for entity in ['Analysis file', 'Sequence file', 'Image file'] if entity in spreadsheet_obj.sheet_names]
         
     flattened_list = []
@@ -402,18 +405,17 @@ def main(spreadsheet_filename: str, input_dir: str, output_dir: str,
 
     
     if group_field == '':
-        flattened.to_csv(f"{output_dir}/{spreadsheet_filename.replace('.xlsx', '_denormalised.csv')}", index=False)
+        flattened.to_csv(f"{output_dir}/{filename.replace('.xlsx', '_denormalised.csv')}", index=False)
         return
     if group_field not in flattened:
         print(f'Group field provided not in spreadsheet: {group_field}\nProviding denormalised spreadsheet')
-        flattened.to_csv(f"{output_dir}/{spreadsheet_filename.replace('.xlsx', '_denormalised.csv')}", index=False)
+        flattened.to_csv(f"{output_dir}/{filename.replace('.xlsx', '_denormalised.csv')}", index=False)
         return
     flattened_grouped = flattened.groupby(group_field).agg(collapse_values).dropna(axis=1, how='all')
-    flattened_grouped.to_csv(f"{output_dir}/{spreadsheet_filename.replace('.xlsx', '.csv')}", index=True)
+    flattened_grouped.to_csv(f"{output_dir}/{filename.replace('.xlsx', '.csv')}", index=True)
 
 
 if __name__ == "__main__":
     args = define_parser().parse_args()
-    main(spreadsheet_filename=args.spreadsheet_filename,
-         input_dir=INPUT_DIR, output_dir=OUTPUT_DIR,
-         group_field=args.group_field)
+    main(spreadsheet_path=args.spreadsheet_path,
+         output_dir=args.output_dir, group_field=args.group_field)

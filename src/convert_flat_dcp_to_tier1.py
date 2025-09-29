@@ -1,4 +1,5 @@
 import argparse
+import os
 import re
 
 import requests
@@ -7,18 +8,22 @@ from dateutil.parser import date_parse
 import pandas as pd
 import numpy as np
 
-from src.dcp_to_tier1_mapping import DCP_TIER1_MAP, TIER1, HSAP_AGE_TO_DEV_DICT, GOLDEN_SPREADSHEET, COLLECTION_DICT
+from src.dcp_to_tier1_mapping import (
+    DCP_TIER1_MAP, TIER1, HSAP_AGE_TO_DEV_DICT, 
+    GOLDEN_SPREADSHEET, COLLECTION_DICT
+)
 from src.flatten_dcp import explode_csv_col
 
-INPUT_DIR = 'data/denormalised_spreadsheet'
 OUTPUT_DIR = 'data/tier1_output'
 
 
 def define_parser():
     '''Defines and returns the argument parser.'''
     parser = argparse.ArgumentParser(description='Parser for the arguments')
-    parser.add_argument('--flat_filename', '-s', action='store',
-                        dest='flat_filename', type=str, required=True, help='flat dcp spreadsheet filename')
+    parser.add_argument('--flat_path', '-s', action='store',
+                        dest='flat_path', type=str, required=True, help='flat dcp spreadsheet path')
+    parser.add_argument("-o", "--output_dir", action="store", default='data/tier1_output',
+                    dest="output_dir", type=str, required=False, help="directory to output tier1 spreadsheet")
     return parser
 
 def get_ols_id(term, ontology):
@@ -332,9 +337,9 @@ def select_cols(dcp_df:pd.DataFrame, cols:list)->pd.DataFrame:
     dcp_df[na_cols] = np.nan
     return dcp_df[cols].drop_duplicates()
 
-def main(flat_filename:str, input_dir:str, output_dir:str):
-    dcp_spreadsheet_filename = f'{input_dir}/{flat_filename}'
-    dcp_spreadsheet = pd.read_csv(dcp_spreadsheet_filename, dtype=str)
+def main(flat_path:str, output_dir:str):
+    filename = os.path.basename(flat_path)
+    dcp_spreadsheet = pd.read_csv(flat_path, dtype=str)
     
     dcp_spreadsheet = edit_sample_source(dcp_spreadsheet)
     dcp_spreadsheet = edit_tissue_type(dcp_spreadsheet)
@@ -357,9 +362,9 @@ def main(flat_filename:str, input_dir:str, output_dir:str):
     dcp_spreadsheet = rename_cols(dcp_spreadsheet, map_dict=DCP_TIER1_MAP)
 
     obs = select_cols(dcp_spreadsheet, cols=TIER1['obs'])
-    obs.to_csv(f"{output_dir}/{flat_filename.replace('.csv', '_tier1.csv')}", index=False)
+    obs.to_csv(os.path.join(output_dir, f"{filename.replace('.csv', '_tier1.csv')}"), index=False)
 
-    output_path = f"{output_dir}/{flat_filename.replace('.csv', '_tier1.xlsx')}"
+    output_path = os.path.join(output_dir, f"{filename.replace('.csv', '_tier1.xlsx')}")
     with pd.ExcelWriter(output_path) as writer:
         for tab, fields in GOLDEN_SPREADSHEET.items():
             select_cols(dcp_spreadsheet, cols=fields).to_excel(writer, sheet_name=tab, index=True, header=True)
@@ -368,4 +373,4 @@ def main(flat_filename:str, input_dir:str, output_dir:str):
 if __name__ == "__main__":
     args = define_parser().parse_args()
 
-    main(flat_filename=args.flat_filename, input_dir=INPUT_DIR, output_dir=OUTPUT_DIR)
+    main(flat_path=args.flat_path, output_dir=OUTPUT_DIR)
