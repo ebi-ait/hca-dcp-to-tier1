@@ -1,8 +1,14 @@
+import os
+import sys
 import unittest
 from io import BytesIO
 
 import pandas as pd
 import openpyxl
+
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, project_root)
+
 from src.flatten_dcp import remove_empty_tabs_and_fields
 from src.flatten_dcp import rename_vague_friendly_names
 from src.flatten_dcp import derive_exprimental_design
