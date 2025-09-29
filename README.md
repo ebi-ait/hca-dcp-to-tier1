@@ -15,7 +15,7 @@ This convertion is done by running the [dcp_to_tier1.py](dcp_to_tier1.py) script
     1. Open denormalised spreadsheet
     1. Edit all conditinally mapped tier 1 fields
     1. Using the [mapping dictionary](src/dcp_to_tier1_mapping.py) convert all other available Tier 1 metadata
-    1. Export to `uns` and `obs` csv files 
+    1. Export to golden spreadsheet format
 
 
 ## Usage
