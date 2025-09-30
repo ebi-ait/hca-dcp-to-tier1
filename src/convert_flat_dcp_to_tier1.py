@@ -22,8 +22,8 @@ def define_parser():
     parser = argparse.ArgumentParser(description='Parser for the arguments')
     parser.add_argument('--flat_path', '-s', action='store',
                         dest='flat_path', type=str, required=True, help='flat dcp spreadsheet path')
-    parser.add_argument("-o", "--output_dir", action="store", default='data/tier1_output',
-                    dest="output_dir", type=str, required=False, help="directory to output tier1 spreadsheet")
+    parser.add_argument("-o", "--output_dir", action="store", default=OUTPUT_DIR,
+                        dest="output_dir", type=str, required=False, help="directory to output tier1 spreadsheet")
     return parser
 
 def get_ols_id(term, ontology):
@@ -203,8 +203,7 @@ def edit_reference_genome(dcp_df):
         return dcp_df
     dcp_df['reference_genome'] = dcp_df['analysis_file.genome_assembly_version'].dropna()\
         .apply(lambda x: x if x == "Not Applicable" else (
-            x.replace('||Not Applicable||', '||')
-            .replace('||Not Applicable', '')
+            x.replace('||Not Applicable', '')
             .replace('Not Applicable||', '')
             .replace('Not Applicable', '')
             ))
@@ -246,12 +245,12 @@ def edit_tissue(dcp_df):
 def tissue_free_text_helper(row):
     organ_parts = 'specimen_from_organism.organ_parts'
     organ = 'specimen_from_organism.organ'
+    if f'{organ}.text' in row and row[f'{organ}.text'].lower() != row[f'{organ}.ontology_label'].lower():
+        return row[f'{organ}.text']
     if f'{organ_parts}.text' in row and \
         row[f'{organ_parts}.text'] is not np.nan and \
         row[f'{organ_parts}.text'].lower() != row[f'{organ_parts}.ontology_label'].lower():
         return row[f'{organ_parts}.text']
-    if f'{organ}.text' in row and row[f'{organ}.text'].lower() != row[f'{organ}.ontology_label'].lower():
-        return row[f'{organ}.text']
     return None
 
 def edit_tissue_free_text(dcp_df):
@@ -374,4 +373,4 @@ def main(flat_path:str, output_dir:str):
 if __name__ == "__main__":
     args = define_parser().parse_args()
 
-    main(flat_path=args.flat_path, output_dir=OUTPUT_DIR)
+    main(flat_path=args.flat_path, output_dir=args.output_dir)
