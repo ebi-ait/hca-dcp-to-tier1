@@ -245,12 +245,12 @@ def edit_tissue(dcp_df):
 def tissue_free_text_helper(row):
     organ_parts = 'specimen_from_organism.organ_parts'
     organ = 'specimen_from_organism.organ'
-    if f'{organ}.text' in row and row[f'{organ}.text'].lower() != row[f'{organ}.ontology_label'].lower():
-        return row[f'{organ}.text']
     if f'{organ_parts}.text' in row and \
         row[f'{organ_parts}.text'] is not np.nan and \
         row[f'{organ_parts}.text'].lower() != row[f'{organ_parts}.ontology_label'].lower():
         return row[f'{organ_parts}.text']
+    if f'{organ}.text' in row and row[f'{organ}.text'].lower() != row[f'{organ}.ontology_label'].lower():
+        return row[f'{organ}.text']
     return None
 
 def edit_tissue_free_text(dcp_df):
